@@ -15,7 +15,9 @@ class Scanner(private val source: String) {
         while (!isAtEnd()) {
             start = current
             when (val res = scanToken()) {
-                is Ok -> ret.add(res.result)
+                is Ok -> if (res.result.tokenType != NONE) {
+                    ret.add(res.result)
+                }
                 is Err -> {
                     Lox.error(line, res.message)
                 }
@@ -44,6 +46,19 @@ class Scanner(private val source: String) {
             '=' -> Ok(createToken(if (match('=')) EQUAL_EQUAL else EQUAL))
             '<' -> Ok(createToken(if (match('=')) LESS_EQUAL else LESS))
             '>' -> Ok(createToken(if (match('=')) GREATER_EQUAL else GREATER))
+            '/' -> if (match('/')) {
+                while (peek() != '\n' && !isAtEnd()) {
+                    advance()
+                }
+                Ok(createToken(NONE))
+            } else {
+                Ok(createToken(SLASH))
+            }
+            ' ', '\r', '\t' -> Ok(createToken(NONE))
+            '\n' -> {
+                line++
+                Ok(createToken(NONE))
+            }
             else -> Err("Unexpected character $ch.")
         }
     }
@@ -57,7 +72,7 @@ class Scanner(private val source: String) {
         return source[current++]
     }
 
-    private fun match(expected: Char) : Boolean {
+    private fun match(expected: Char): Boolean {
         if (isAtEnd()) {
             return false
         }
@@ -68,6 +83,10 @@ class Scanner(private val source: String) {
         } else {
             false
         }
+    }
+
+    private fun peek(): Char {
+        return if (!isAtEnd()) source[current] else '\u0000'
     }
 
     private fun isAtEnd() = current >= source.length

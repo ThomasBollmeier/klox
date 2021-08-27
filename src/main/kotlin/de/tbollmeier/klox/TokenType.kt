@@ -1,6 +1,9 @@
 package de.tbollmeier.klox
 
 enum class TokenType {
+    // Comment, Whitespace
+    NONE,
+
     // Single-character tokens
     LEFT_PAREN,
     RIGHT_PAREN,
