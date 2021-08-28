@@ -12,6 +12,9 @@ repositories {
 }
 
 dependencies {
+    implementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    implementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    implementation("org.testng:testng:7.1.0")
     testImplementation(kotlin("test"))
 }
 

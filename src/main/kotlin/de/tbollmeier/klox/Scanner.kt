@@ -15,7 +15,7 @@ class Scanner(private val source: String) {
         while (!isAtEnd()) {
             start = current
             when (val res = scanToken()) {
-                is Ok -> if (res.result.tokenType != NONE) {
+                is Ok -> if (res.result != null) {
                     ret.add(res.result)
                 }
                 is Err -> {
@@ -29,7 +29,7 @@ class Scanner(private val source: String) {
         return ret
     }
 
-    private fun scanToken(): Result<Token, String> {
+    private fun scanToken(): Result<Token?, String> {
         val ch = advance()
         return when (ch) {
             '(' -> Ok(createToken(LEFT_PAREN))
@@ -50,17 +50,37 @@ class Scanner(private val source: String) {
                 while (peek() != '\n' && !isAtEnd()) {
                     advance()
                 }
-                Ok(createToken(NONE))
+                Ok(null)
             } else {
                 Ok(createToken(SLASH))
             }
-            ' ', '\r', '\t' -> Ok(createToken(NONE))
+            ' ', '\r', '\t' -> Ok(null)
             '\n' -> {
                 line++
-                Ok(createToken(NONE))
+                Ok(null)
             }
+            '"' -> scanString()
             else -> Err("Unexpected character $ch.")
         }
+    }
+
+    private fun scanString(): Result<Token?, String> {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') {
+                line++
+            }
+            advance()
+        }
+
+        if (isAtEnd()) {
+            return Err("Unterminated string.")
+        }
+
+        advance() // Consume closing "
+
+        val content = source.substring(start + 1, current - 1)
+
+        return Ok(createToken(STRING, content))
     }
 
     private fun createToken(tokenType: TokenType, literal: Any? = null): Token {
