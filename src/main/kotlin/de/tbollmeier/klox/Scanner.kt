@@ -8,6 +8,25 @@ class Scanner(private val source: String) {
     private var start = 0
     private var line = 1
 
+    private val reservedWords = mapOf<String, TokenType>(
+        "and" to AND,
+        "class" to CLASS,
+        "else" to ELSE,
+        "false" to FALSE,
+        "fun" to FUN,
+        "for" to FOR,
+        "if" to IF,
+        "nil" to NIL,
+        "or" to OR,
+        "print" to PRINT,
+        "return" to RETURN,
+        "super" to SUPER,
+        "this" to THIS,
+        "true" to TRUE,
+        "var" to VAR,
+        "while" to WHILE
+    )
+
     fun scanTokens(): List<Token> {
 
         val ret = mutableListOf<Token>()
@@ -31,22 +50,22 @@ class Scanner(private val source: String) {
 
     private fun scanToken(): Result<Token?, String> {
         val ch = advance()
-        return when (ch) {
-            '(' -> Ok(createToken(LEFT_PAREN))
-            ')' -> Ok(createToken(RIGHT_PAREN))
-            '{' -> Ok(createToken(LEFT_BRACE))
-            '}' -> Ok(createToken(RIGHT_BRACE))
-            ',' -> Ok(createToken(COMMA))
-            '.' -> Ok(createToken(DOT))
-            '-' -> Ok(createToken(MINUS))
-            '+' -> Ok(createToken(PLUS))
-            ';' -> Ok(createToken(SEMICOLON))
-            '*' -> Ok(createToken(STAR))
-            '!' -> Ok(createToken(if (match('=')) BANG_EQUAL else BANG))
-            '=' -> Ok(createToken(if (match('=')) EQUAL_EQUAL else EQUAL))
-            '<' -> Ok(createToken(if (match('=')) LESS_EQUAL else LESS))
-            '>' -> Ok(createToken(if (match('=')) GREATER_EQUAL else GREATER))
-            '/' -> if (match('/')) {
+        return when {
+            ch == '(' -> Ok(createToken(LEFT_PAREN))
+            ch == ')' -> Ok(createToken(RIGHT_PAREN))
+            ch == '{' -> Ok(createToken(LEFT_BRACE))
+            ch == '}' -> Ok(createToken(RIGHT_BRACE))
+            ch == ',' -> Ok(createToken(COMMA))
+            ch == '.' -> Ok(createToken(DOT))
+            ch == '-' -> Ok(createToken(MINUS))
+            ch == '+' -> Ok(createToken(PLUS))
+            ch == ';' -> Ok(createToken(SEMICOLON))
+            ch == '*' -> Ok(createToken(STAR))
+            ch == '!' -> Ok(createToken(if (match('=')) BANG_EQUAL else BANG))
+            ch == '=' -> Ok(createToken(if (match('=')) EQUAL_EQUAL else EQUAL))
+            ch == '<' -> Ok(createToken(if (match('=')) LESS_EQUAL else LESS))
+            ch == '>' -> Ok(createToken(if (match('=')) GREATER_EQUAL else GREATER))
+            ch == '/' -> if (match('/')) {
                 while (peek() != '\n' && !isAtEnd()) {
                     advance()
                 }
@@ -54,15 +73,55 @@ class Scanner(private val source: String) {
             } else {
                 Ok(createToken(SLASH))
             }
-            ' ', '\r', '\t' -> Ok(null)
-            '\n' -> {
+            ch == ' ' || ch == '\r' || ch == '\t' -> Ok(null)
+            ch == '\n' -> {
                 line++
                 Ok(null)
             }
-            '"' -> scanString()
+            ch == '"' -> scanString()
+            isDigit(ch) -> scanNumber()
+            isAlpha(ch) -> scanIdentifier()
             else -> Err("Unexpected character $ch.")
         }
     }
+
+    private fun scanIdentifier(): Result<Token?, String> {
+        while (isAlphaNumeric(peek())) {
+            advance()
+        }
+
+        val lexeme = source.substring(start, current)
+        val tokenType = reservedWords[lexeme] ?: IDENTIFIER
+        val literal = if (tokenType == IDENTIFIER)
+            lexeme
+        else
+            null
+
+        return Ok(createToken(tokenType, literal))
+    }
+
+    private fun isAlphaNumeric(ch: Char) = isAlpha(ch) || isDigit(ch)
+
+    private fun isAlpha(ch: Char) = ch in 'a'..'z' || ch in 'A'..'Z' || ch == '_'
+
+    private fun scanNumber(): Result<Token?, String> {
+        while (isDigit(peek())) {
+            advance()
+        }
+
+        if (peek() == '.' && isDigit(peek(2))) {
+            advance() // consume "."
+            while (isDigit(peek())) {
+                advance()
+            }
+        }
+
+        val numValue = source.substring(start, current).toDouble()
+
+        return Ok(createToken(NUMBER, numValue))
+    }
+
+    private fun isDigit(ch: Char) = ch in '0'..'9'
 
     private fun scanString(): Result<Token?, String> {
         while (peek() != '"' && !isAtEnd()) {
@@ -105,8 +164,11 @@ class Scanner(private val source: String) {
         }
     }
 
-    private fun peek(): Char {
-        return if (!isAtEnd()) source[current] else '\u0000'
+    private fun peek(lookahead: Int = 1): Char {
+        return if (current + lookahead - 1 <= source.length - 1)
+            source[current + lookahead - 1]
+        else
+            '\u0000'
     }
 
     private fun isAtEnd() = current >= source.length
