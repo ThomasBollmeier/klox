@@ -1,11 +1,16 @@
 package de.tbollmeier.klox
 
+import de.tbollmeier.klox.TokenType.EOF
 import java.io.File
 import kotlin.system.exitProcess
 
 object Lox {
 
     private var hadError = false
+
+    fun reset() {
+        hadError = false
+    }
 
     fun runPrompt() {
         while (true) {
@@ -24,7 +29,7 @@ object Lox {
     }
 
     private fun run(source: String) {
-        hadError = false
+        reset()
         val tokens = Scanner(source).scanTokens()
 
         for (token in tokens) {
@@ -36,7 +41,15 @@ object Lox {
         report(line, "", message)
     }
 
-    fun report(line: Int, where: String, message: String) {
+    fun error(token: Token, message: String) {
+        if (token.tokenType == EOF) {
+            report(token.line, " at end", message)
+        } else {
+            report(token.line, "at '${token.lexeme}'", message)
+        }
+    }
+
+    private fun report(line: Int, where: String, message: String) {
         System.err.println("[$line] Error $where: $message")
         hadError = true
     }
