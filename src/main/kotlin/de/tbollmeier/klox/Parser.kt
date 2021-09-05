@@ -88,7 +88,7 @@ class Parser(private val tokens: List<Token>) {
                 consume(RIGHT_PAREN, "Expected closing ')' after expression")
                 Grouping(expr)
             }
-            else -> throw error(peek(), "Unknown token")
+            else -> throw error(peek(), "Expected expression.")
         }
     }
 
@@ -104,6 +104,19 @@ class Parser(private val tokens: List<Token>) {
     private fun error(token: Token, errorMessage: String): ParseError {
         Lox.error(token, errorMessage)
         return ParseError()
+    }
+
+    private fun synchronize() {
+        advance()
+        while (!isAtEnd()) {
+            if (previous().tokenType == SEMICOLON) {
+                return
+            }
+            when (peek().tokenType) {
+                CLASS, FOR, FUN, IF, PRINT, RETURN, VAR, WHILE -> return
+                else -> advance()
+            }
+        }
     }
 
     private fun match(vararg types: TokenType): Boolean {
@@ -135,5 +148,4 @@ class Parser(private val tokens: List<Token>) {
     private fun peek() = tokens[current]
 
     private fun previous() = tokens[current - 1]
-
 }
