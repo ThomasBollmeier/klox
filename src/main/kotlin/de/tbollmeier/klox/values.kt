@@ -1,12 +1,83 @@
 package de.tbollmeier.klox
 
-sealed class Value()
+import kotlin.math.abs
 
-class Nil() : Value()
+sealed class Value() {
 
-class Bool(val value: Boolean) : Value()
+    open fun isTruthy() = true
 
-class Number(val value: Double) : Value()
+    abstract fun isEqual(other: Value): Bool
 
-class Str(val value: String) : Value()
+    fun isNotEqual(other: Value) = Bool(!isEqual(other).isTruthy())
+}
+
+class Nil() : Value() {
+
+    override fun isTruthy() = false
+
+    override fun isEqual(other: Value) = Bool(other is Nil)
+
+}
+
+class Bool(private val value: Boolean) : Value() {
+
+    override fun isTruthy() = value
+
+    override fun isEqual(other: Value): Bool {
+        return if (other is Bool) {
+            Bool(value == other.value)
+        } else {
+            Bool(false)
+        }
+    }
+
+}
+
+class Number(private val value: Double) : Value() {
+
+    companion object {
+        const val EPS = 1E-12
+    }
+
+    fun negate(): Number = Number(-value)
+
+    fun add(other: Number) = Number(value + other.value)
+
+    fun subtract(other: Number) = Number(value - other.value)
+
+    fun multiply(other: Number) = Number(value * other.value)
+
+    fun divide(other: Number) = Number(value / other.value)
+
+    fun isGreater(other: Number) = Bool(value > other.value)
+
+    fun isGreaterOrEq(other: Number) = Bool(value >= other.value)
+
+    fun isLess(other: Number) = Bool(value < other.value)
+
+    fun isLessOrEq(other: Number) = Bool(value <= other.value)
+
+    override fun isEqual(other: Value): Bool {
+        return if (other is Number) {
+            Bool(abs(value - other.value) < EPS)
+        } else {
+            Bool(false)
+        }
+    }
+
+}
+
+class Str(private val value: String) : Value() {
+
+    fun concat(other: Str) = Str(value + other.value)
+
+    override fun isEqual(other: Value): Bool {
+        return if (other is Str) {
+            Bool(value == other.value)
+        } else {
+            Bool(false)
+        }
+    }
+
+}
 

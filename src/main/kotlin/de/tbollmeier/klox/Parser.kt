@@ -2,6 +2,8 @@ package de.tbollmeier.klox
 
 import de.tbollmeier.klox.TokenType.*
 
+fun parse(code: String) = Parser(Scanner(code).scanTokens()).parse()
+
 class ParseError() : RuntimeException()
 
 class Parser(private val tokens: List<Token>) {
