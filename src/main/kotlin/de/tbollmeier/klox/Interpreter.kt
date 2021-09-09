@@ -2,15 +2,25 @@ package de.tbollmeier.klox
 
 import de.tbollmeier.klox.TokenType.*
 
-class InterpreterError(message: String) : RuntimeException(message)
+class InterpreterError(val token: Token, message: String) : RuntimeException(message)
 
 class Interpreter : Visitor<Value> {
+
+    fun interpret(expression: Expr) {
+        try {
+            val value = evaluate(expression)
+            println(value)
+        } catch (error: InterpreterError) {
+            Lox.runtimeError(error)
+        }
+    }
 
     fun evaluate(expression: Expr) = expression.accept(this)
 
     override fun visitBinaryExpr(binary: Binary): Value {
         val left = evaluate(binary.left)
         val right = evaluate(binary.right)
+        val numbersExpectedMsg = "Number operands expected"
 
         return when (binary.operator.tokenType) {
             PLUS -> {
@@ -19,61 +29,64 @@ class Interpreter : Visitor<Value> {
                 } else if (left is Str && right is Str) {
                     left.concat(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, "Number or string operands expected")
                 }
             }
             MINUS -> {
                 if (left is Number && right is Number) {
                     left.subtract(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             STAR -> {
                 if (left is Number && right is Number) {
                     left.multiply(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             SLASH -> {
                 if (left is Number && right is Number) {
-                    left.divide(right)
+                    if (right.isNotEqual(Number(0.0)).isTruthy())
+                        left.divide(right)
+                    else
+                        throw InterpreterError(binary.operator, "division by zero")
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             GREATER -> {
                 if (left is Number && right is Number) {
                     left.isGreater(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             GREATER_EQUAL -> {
                 if (left is Number && right is Number) {
                     left.isGreaterOrEq(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             LESS -> {
                 if (left is Number && right is Number) {
                     left.isLess(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             LESS_EQUAL -> {
                 if (left is Number && right is Number) {
                     left.isLessOrEq(right)
                 } else {
-                    throw InterpreterError("Unsupported operand types")
+                    throw InterpreterError(binary.operator, numbersExpectedMsg)
                 }
             }
             EQUAL_EQUAL -> left.isEqual(right)
             BANG_EQUAL -> left.isNotEqual(right)
-            else -> throw InterpreterError("Unsupported operator '${binary.operator.lexeme}'")
+            else -> throw InterpreterError(binary.operator, "Unsupported operator '${binary.operator.lexeme}'")
         }
     }
 
@@ -98,10 +111,10 @@ class Interpreter : Visitor<Value> {
                 if (value is Number) {
                     value.negate()
                 } else {
-                    throw InterpreterError("Operator '-' can only be used with numbers")
+                    throw InterpreterError(op, "Operator '-' can only be used with numbers")
                 }
             }
-            else -> throw InterpreterError("Unknown unary operator '${op.lexeme}'")
+            else -> throw InterpreterError(op, "Unknown unary operator '${op.lexeme}'")
         }
     }
 }

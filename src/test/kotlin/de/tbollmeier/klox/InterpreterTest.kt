@@ -7,7 +7,7 @@ import org.testng.Assert.*
 class InterpreterTest {
 
     @Test
-    fun testEvaluate() {
+    fun `evaluates successfully`() {
 
         val code = "(1 + 2) * 3 == 9"
         val expr = parse(code)

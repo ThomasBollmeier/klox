@@ -9,6 +9,7 @@ sealed class Value() {
     abstract fun isEqual(other: Value): Bool
 
     fun isNotEqual(other: Value) = Bool(!isEqual(other).isTruthy())
+
 }
 
 class Nil() : Value() {
@@ -16,6 +17,8 @@ class Nil() : Value() {
     override fun isTruthy() = false
 
     override fun isEqual(other: Value) = Bool(other is Nil)
+
+    override fun toString(): String = "nil"
 
 }
 
@@ -30,6 +33,8 @@ class Bool(private val value: Boolean) : Value() {
             Bool(false)
         }
     }
+
+    override fun toString() = value.toString()
 
 }
 
@@ -65,6 +70,13 @@ class Number(private val value: Double) : Value() {
         }
     }
 
+    override fun toString(): String {
+        var ret = value.toString()
+        if (ret.endsWith(".0")) {
+            ret = ret.substring(0, ret.length - 2)
+        }
+        return ret
+    }
 }
 
 class Str(private val value: String) : Value() {
@@ -79,5 +91,6 @@ class Str(private val value: String) : Value() {
         }
     }
 
+    override fun toString() = "\"$value\""
 }
 
