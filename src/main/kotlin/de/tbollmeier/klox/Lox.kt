@@ -13,10 +13,10 @@ object Lox {
     private fun reset() {
         hadError = false
         hadRuntimeError = false
-        interpreter = Interpreter()
     }
 
     fun runPrompt() {
+        interpreter = Interpreter()
         while (true) {
             print("> ")
             val line = readLine() ?: break
@@ -25,6 +25,7 @@ object Lox {
     }
 
     fun runFile(filePath: String) {
+        interpreter = Interpreter()
         val source = File(filePath).readText()
         run(source)
         if (hadError) {
