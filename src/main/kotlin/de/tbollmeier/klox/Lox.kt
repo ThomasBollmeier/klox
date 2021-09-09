@@ -8,10 +8,12 @@ object Lox {
 
     private var hadError = false
     private var hadRuntimeError = false
+    private lateinit var interpreter: Interpreter
 
     private fun reset() {
         hadError = false
         hadRuntimeError = false
+        interpreter = Interpreter()
     }
 
     fun runPrompt() {
@@ -42,7 +44,7 @@ object Lox {
         if (hadError) {
             return
         }
-        Interpreter().interpret(expr!!)
+        interpreter.interpret(expr!!)
     }
 
     fun error(line: Int, message: String) {
