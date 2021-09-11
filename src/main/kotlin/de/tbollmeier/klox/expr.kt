@@ -1,37 +1,37 @@
 package de.tbollmeier.klox
 
-interface Visitor<R> {
+interface ExprVisitor<R> {
     fun visitBinaryExpr(binary: Binary): R
     fun visitGroupingExpr(grouping: Grouping): R
     fun visitLiteralExpr(literal: Literal): R
     fun visitUnaryExpr(unary: Unary): R
 }
 
-abstract class Expr() {
-    abstract fun <R> accept(visitor: Visitor<R>): R
+sealed class Expr() {
+    abstract fun <R> accept(exprVisitor: ExprVisitor<R>): R
 }
 
 class Binary(val operator: Token, val left: Expr, val right: Expr) : Expr() {
-    override fun <R> accept(visitor: Visitor<R>): R {
-        return visitor.visitBinaryExpr(this)
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitBinaryExpr(this)
     }
 }
 
 class Grouping(val expression: Expr) : Expr() {
-    override fun <R> accept(visitor: Visitor<R>): R {
-        return visitor.visitGroupingExpr(this)
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitGroupingExpr(this)
     }
 }
 
 class Literal(val value: Any?) : Expr() {
-    override fun <R> accept(visitor: Visitor<R>): R {
-        return visitor.visitLiteralExpr(this)
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitLiteralExpr(this)
     }
 }
 
 class Unary(val operator: Token, val right: Expr) : Expr() {
-    override fun <R> accept(visitor: Visitor<R>): R {
-        return visitor.visitUnaryExpr(this)
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitUnaryExpr(this)
     }
 }
 

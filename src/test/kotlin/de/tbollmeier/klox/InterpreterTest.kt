@@ -7,17 +7,14 @@ import org.testng.Assert.*
 class InterpreterTest {
 
     @Test
-    fun `evaluates successfully`() {
+    fun `executes successfully`() {
 
-        val code = "(1 + 2) * 3 == 9"
-        val expr = parse(code)
+        val code = "print (1 + 2) * 3 == 9; print 7 * 6;"
+        val program = parse(code)
 
-        assertNotNull(expr)
+        assertNotNull(program)
 
-        val interpreter = Interpreter()
-        val value = interpreter.evaluate(expr!!)
+        Interpreter().interpret(program!!)
 
-        assertTrue(value is Bool)
-        assertTrue(value.isTruthy())
     }
 }

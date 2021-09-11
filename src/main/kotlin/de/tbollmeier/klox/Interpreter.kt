@@ -4,12 +4,11 @@ import de.tbollmeier.klox.TokenType.*
 
 class InterpreterError(val token: Token, message: String) : RuntimeException(message)
 
-class Interpreter : Visitor<Value> {
+class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
 
-    fun interpret(expression: Expr) {
+    fun interpret(program: Program) {
         try {
-            val value = evaluate(expression)
-            println(value)
+            program.accept(this)
         } catch (error: InterpreterError) {
             Lox.runtimeError(error)
         }
@@ -116,5 +115,14 @@ class Interpreter : Visitor<Value> {
             }
             else -> throw InterpreterError(op, "Unknown unary operator '${op.lexeme}'")
         }
+    }
+
+    override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
+        evaluate(expressionStmt.expression)
+    }
+
+    override fun visitPrintStmt(printStmt: PrintStmt) {
+        val value = evaluate(printStmt.expression)
+        println("$value")
     }
 }
