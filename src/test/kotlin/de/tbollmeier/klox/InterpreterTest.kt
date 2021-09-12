@@ -14,7 +14,24 @@ class InterpreterTest {
 
         assertNotNull(program)
 
-        Interpreter().interpret(program!!)
+        Interpreter().interpret(program)
+
+    }
+
+    @Test
+    fun `execute variable declaration`() {
+
+        val code = """
+            var a = 7;
+            var b = 6;
+            var answer = a * b;
+            print answer;
+        """.trimIndent()
+        val program = parse(code)
+
+        assertNotNull(program)
+
+        Interpreter().interpret(program)
 
     }
 }

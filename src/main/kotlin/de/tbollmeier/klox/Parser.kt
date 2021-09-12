@@ -10,30 +10,46 @@ class Parser(private val tokens: List<Token>) {
 
     private var current = 0
 
-    fun parse() : Program? {
-        return try {
-            program()
-        } catch (error: ParseError) {
-            null
-        }
+    fun parse(): Program {
+        return program()
     }
 
     // program -> statement* EOF
-    private fun program() : Program {
+    private fun program(): Program {
         val statements = mutableListOf<Stmt>()
         while (!isAtEnd()) {
-            statements.add(statement())
+            val stmt = statement()
+            if (stmt != null) {
+                statements.add(stmt)
+            }
         }
         return Program(statements)
     }
 
-    // statement -> expressionStmt | printStmt
-    private fun statement(): Stmt {
-        return if (match(PRINT)) {
-            printStmt()
-        } else {
-            expressionStmt()
+    // statement -> varDeclStmt | expressionStmt | printStmt
+    private fun statement(): Stmt? {
+        return try {
+            when {
+                match(VAR) -> varDeclStmt()
+                match(PRINT) -> printStmt()
+                else -> expressionStmt()
+            }
+        } catch (error: ParseError) {
+            synchronize()
+            null
         }
+    }
+
+    // varDeclStmt -> "VAR" IDENTIFIER ("=" expression)? ";"
+    private fun varDeclStmt(): Stmt {
+        val name = consume(IDENTIFIER, "Expected variable name.")
+        val initializer = if (match(EQUAL)) {
+            expression()
+        } else {
+            null
+        }
+        consume(SEMICOLON, "Expected ';' after variable declaration.")
+        return VarDeclStmt(name, initializer)
     }
 
     // expressionStmt -> expression ";"
@@ -110,7 +126,7 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
     private fun primary(): Expr {
         return when {
             match(NUMBER, STRING) -> Literal(previous().literal)
@@ -122,6 +138,7 @@ class Parser(private val tokens: List<Token>) {
                 consume(RIGHT_PAREN, "Expected closing ')' after expression")
                 Grouping(expr)
             }
+            match(IDENTIFIER) -> Variable(previous())
             else -> throw error(peek(), "Expected expression.")
         }
     }

@@ -6,6 +6,8 @@ class InterpreterError(val token: Token, message: String) : RuntimeException(mes
 
 class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
 
+    private val environment = Environment()
+
     fun interpret(program: Program) {
         try {
             program.accept(this)
@@ -14,7 +16,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
         }
     }
 
-    fun evaluate(expression: Expr) = expression.accept(this)
+    private fun evaluate(expression: Expr) = expression.accept(this)
 
     override fun visitBinaryExpr(binary: Binary): Value {
         val left = evaluate(binary.left)
@@ -124,5 +126,19 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
     override fun visitPrintStmt(printStmt: PrintStmt) {
         val value = evaluate(printStmt.expression)
         println("$value")
+    }
+
+    override fun visitVariable(variable: Variable): Value {
+        return environment.getValue(variable.name)
+    }
+
+    override fun visitVarDeclStmt(varDeclStmt: VarDeclStmt) {
+        val name = varDeclStmt.name.lexeme
+        val value = if (varDeclStmt.initializer != null) {
+            evaluate(varDeclStmt.initializer)
+        } else {
+            Nil()
+        }
+        environment.define(name, value)
     }
 }
