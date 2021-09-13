@@ -66,9 +66,23 @@ class Parser(private val tokens: List<Token>) {
         return PrintStmt(expr)
     }
 
-    // expression -> equality
+    // expression -> assignment | equality
     private fun expression(): Expr {
-        return equality()
+
+        val expr = equality()
+
+        if (match(EQUAL)) {
+            val equals = previous()
+            when (expr) {
+                is Variable -> {
+                    val rhs = expression()
+                    return Assign(expr.name, rhs)
+                }
+                else -> error(equals, "Invalid assignment target.")
+            }
+        }
+
+        return expr
     }
 
     // equality -> comparison (("!=" | "==) comparison)*

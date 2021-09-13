@@ -17,7 +17,7 @@ class ParserTest {
 
         assertNotNull(program)
 
-        val exprStmt = program!!.statements[0] as? ExpressionStmt
+        val exprStmt = program.statements[0] as? ExpressionStmt
 
         assertNotNull(exprStmt)
 

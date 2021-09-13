@@ -2,6 +2,7 @@ package de.tbollmeier.klox
 
 interface ExprVisitor<R> {
     fun visitBinaryExpr(binary: Binary): R
+    fun visitAssignExpr(assign: Assign): R
     fun visitGroupingExpr(grouping: Grouping): R
     fun visitLiteralExpr(literal: Literal): R
     fun visitVariable(variable: Variable): R
@@ -10,6 +11,12 @@ interface ExprVisitor<R> {
 
 sealed class Expr() {
     abstract fun <R> accept(exprVisitor: ExprVisitor<R>): R
+}
+
+class Assign(val name: Token, val value: Expr) : Expr() {
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitAssignExpr(this)
+    }
 }
 
 class Binary(val operator: Token, val left: Expr, val right: Expr) : Expr() {
@@ -41,4 +48,3 @@ class Unary(val operator: Token, val right: Expr) : Expr() {
         return exprVisitor.visitUnaryExpr(this)
     }
 }
-

@@ -12,4 +12,12 @@ class Environment {
         return values[name.lexeme] ?: throw InterpreterError(name, "Undefined variable '${name.lexeme}'.")
     }
 
+    fun assign(name: Token, value: Value) {
+        if (name.lexeme in values) {
+            values[name.lexeme] = value
+        } else {
+            throw InterpreterError(name, "Undefined variable '${name.lexeme}'.")
+        }
+    }
+
 }

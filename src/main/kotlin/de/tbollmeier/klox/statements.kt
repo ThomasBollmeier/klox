@@ -25,12 +25,14 @@ sealed class Stmt {
 }
 
 class VarDeclStmt(val name: Token, val initializer: Expr?) : Stmt() {
+
     override fun <R> accept(visitor: StmtVisitor<R>): R {
         return visitor.visitVarDeclStmt(this)
     }
+
 }
 
-abstract class NonDeclStmt(): Stmt()
+abstract class NonDeclStmt : Stmt()
 
 class ExpressionStmt(val expression: Expr) : NonDeclStmt() {
 

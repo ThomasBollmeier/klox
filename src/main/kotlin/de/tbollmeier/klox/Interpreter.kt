@@ -141,4 +141,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
         }
         environment.define(name, value)
     }
+
+    override fun visitAssignExpr(assign: Assign): Value {
+        val value = evaluate(assign.value)
+        environment.assign(assign.name, value)
+        return value
+    }
 }

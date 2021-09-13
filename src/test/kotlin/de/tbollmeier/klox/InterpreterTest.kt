@@ -34,4 +34,22 @@ class InterpreterTest {
         Interpreter().interpret(program)
 
     }
+
+    @Test
+    fun `assignment works`() {
+
+        val code = """
+            var answer = 21;
+            var reply = 23;
+            answer = reply = 2 * answer;
+            print answer;
+            print reply;
+        """.trimIndent()
+        val program = parse(code)
+
+        assertNotNull(program)
+
+        Interpreter().interpret(program)
+
+    }
 }
