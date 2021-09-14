@@ -8,6 +8,8 @@ object Lox {
 
     private var hadError = false
     private var hadRuntimeError = false
+    private var loggingOn = true
+
     private lateinit var interpreter: Interpreter
 
     private fun reset() {
@@ -20,7 +22,7 @@ object Lox {
         while (true) {
             print("> ")
             val line = readLine() ?: break
-            run(line)
+            run(line, exprAllowed = true)
         }
     }
 
@@ -36,16 +38,26 @@ object Lox {
         }
     }
 
-    private fun run(source: String) {
+    private fun run(source: String, exprAllowed: Boolean = false) {
         reset()
-        val expr = parse(source)
-        if (expr == null) {
-            hadError = true
+        loggingOn = false
+        val program = parse(source)
+        loggingOn = true
+        if (!hadError) {
+            interpreter.interpret(program)
+        } else if (exprAllowed) {
+            // check for expression
+            reset()
+            val expr = parseExpr(source)
+            if (expr != null) {
+                try {
+                    println(interpreter.evaluate(expr))
+                } catch (error: InterpreterError) {
+                    runtimeError(error)
+                }
+            }
         }
-        if (hadError) {
-            return
-        }
-        interpreter.interpret(expr!!)
+
     }
 
     fun error(line: Int, message: String) {
@@ -61,7 +73,9 @@ object Lox {
     }
 
     private fun report(line: Int, where: String, message: String) {
-        System.err.println("[$line] Error $where: $message")
+        if (loggingOn) {
+            System.err.println("[$line] Error $where: $message")
+        }
         hadError = true
     }
 

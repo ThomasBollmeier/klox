@@ -4,19 +4,15 @@ import de.tbollmeier.klox.TokenType.*
 
 class InterpreterError(val token: Token, message: String) : RuntimeException(message)
 
-class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
+class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
-    private val environment = Environment()
+    private var environment = Environment()
 
     fun interpret(program: Program) {
-        try {
-            program.accept(this)
-        } catch (error: InterpreterError) {
-            Lox.runtimeError(error)
-        }
+        program.accept(this)
     }
 
-    private fun evaluate(expression: Expr) = expression.accept(this)
+    fun evaluate(expression: Expr) = expression.accept(this)
 
     override fun visitBinaryExpr(binary: Binary): Value {
         val left = evaluate(binary.left)
@@ -126,6 +122,15 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor<Unit> {
     override fun visitPrintStmt(printStmt: PrintStmt) {
         val value = evaluate(printStmt.expression)
         println("$value")
+    }
+
+    override fun visitBlockStmt(blockStmt: BlockStmt) {
+        environment = Environment(environment)
+        try {
+            blockStmt.statements.forEach { it.accept(this) }
+        } finally {
+            environment = environment.enclosing!!
+        }
     }
 
     override fun visitVariable(variable: Variable): Value {

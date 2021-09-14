@@ -4,6 +4,15 @@ import de.tbollmeier.klox.TokenType.*
 
 fun parse(code: String) = Parser(Scanner(code).scanTokens()).parse()
 
+fun parseExpr(code: String): Expr? {
+    val parser = Parser(Scanner(code).scanTokens())
+    return try {
+        parser.expression()
+    } catch(error: ParseError) {
+        null
+    }
+}
+
 class ParseError() : RuntimeException()
 
 class Parser(private val tokens: List<Token>) {
@@ -26,12 +35,13 @@ class Parser(private val tokens: List<Token>) {
         return Program(statements)
     }
 
-    // statement -> varDeclStmt | expressionStmt | printStmt
+    // statement -> varDeclStmt | expressionStmt | printStmt | blockStnt
     private fun statement(): Stmt? {
         return try {
             when {
                 match(VAR) -> varDeclStmt()
                 match(PRINT) -> printStmt()
+                match(LEFT_BRACE) -> blockStmt()
                 else -> expressionStmt()
             }
         } catch (error: ParseError) {
@@ -66,8 +76,27 @@ class Parser(private val tokens: List<Token>) {
         return PrintStmt(expr)
     }
 
-    // expression -> assignment | equality
-    private fun expression(): Expr {
+    // blockStmt -> "{" statement* "}"
+    private fun blockStmt(): BlockStmt {
+        val statements = mutableListOf<Stmt>()
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            val stmt = statement()
+            if (stmt != null) {
+                statements.add(stmt)
+            }
+        }
+
+        consume(RIGHT_BRACE, "Expected '}' after block.")
+        
+        return BlockStmt(statements)
+    }
+
+    // expression -> assignment
+    fun expression() = assignment()
+
+    // assignment -> equality ("=" assignment)?
+    private fun assignment(): Expr {
 
         val expr = equality()
 
@@ -75,7 +104,7 @@ class Parser(private val tokens: List<Token>) {
             val equals = previous()
             when (expr) {
                 is Variable -> {
-                    val rhs = expression()
+                    val rhs = assignment()
                     return Assign(expr.name, rhs)
                 }
                 else -> error(equals, "Invalid assignment target.")
