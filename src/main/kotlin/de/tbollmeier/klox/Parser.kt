@@ -8,7 +8,7 @@ fun parseExpr(code: String): Expr? {
     val parser = Parser(Scanner(code).scanTokens())
     return try {
         parser.expression()
-    } catch(error: ParseError) {
+    } catch (error: ParseError) {
         null
     }
 }
@@ -35,18 +35,26 @@ class Parser(private val tokens: List<Token>) {
         return Program(statements)
     }
 
-    // statement -> varDeclStmt | expressionStmt | printStmt | blockStnt
+    // statement -> varDeclStmt | nonDeclStatement
     private fun statement(): Stmt? {
         return try {
             when {
                 match(VAR) -> varDeclStmt()
-                match(PRINT) -> printStmt()
-                match(LEFT_BRACE) -> blockStmt()
-                else -> expressionStmt()
+                else -> nonDeclStatement()
             }
         } catch (error: ParseError) {
             synchronize()
             null
+        }
+    }
+
+    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt
+    private fun nonDeclStatement(): NonDeclStmt {
+        return when {
+            match(PRINT) -> printStmt()
+            match(LEFT_BRACE) -> blockStmt()
+            match(IF) -> ifStmt()
+            else -> expressionStmt()
         }
     }
 
@@ -88,8 +96,36 @@ class Parser(private val tokens: List<Token>) {
         }
 
         consume(RIGHT_BRACE, "Expected '}' after block.")
-        
+
         return BlockStmt(statements)
+    }
+
+    // ifStmt -> "if" "(" expression ")" nonDeclStatement ("else" nonDeclStatement)?
+    fun ifStmt(): IfStmt {
+
+        val ifToken = previous()
+
+        consume(LEFT_PAREN, "Expected '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expected ')' after condition.")
+
+        val thenBranch = nonDeclStatement()
+
+        if (thenBranch is BlockStmt && thenBranch.hasDeclarations) {
+            throw error(ifToken, "Declarations in if statements are not allowed.")
+        }
+
+        val elseBranch = if (match(ELSE)) {
+            nonDeclStatement()
+        } else {
+            null
+        }
+
+        if (elseBranch is BlockStmt && elseBranch.hasDeclarations) {
+            throw error(ifToken, "Declarations in if statements are not allowed.")
+        }
+
+        return IfStmt(condition, thenBranch, elseBranch)
     }
 
     // expression -> assignment

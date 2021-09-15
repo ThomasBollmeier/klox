@@ -133,6 +133,15 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         }
     }
 
+    override fun visitIfStmt(ifStmt: IfStmt) {
+        val condValue = evaluate(ifStmt.condition)
+        if (condValue.isTruthy()) {
+            ifStmt.thenBranch.accept(this)
+        } else if (ifStmt.elseBranch != null) {
+            ifStmt.elseBranch.accept(this)
+        }
+    }
+
     override fun visitVariable(variable: Variable): Value {
         return environment.getValue(variable.name)
     }

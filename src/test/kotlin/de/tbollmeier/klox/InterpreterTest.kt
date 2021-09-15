@@ -71,6 +71,23 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `if statement works`() {
+
+        testCode("""
+            var age = 4;
+            
+            if (age >= 4) {
+                print "This movie is for you";
+            } else {
+                print "Sorry, you are much too young. Grow up a little!";
+            }
+            
+            print "This is the end.";
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

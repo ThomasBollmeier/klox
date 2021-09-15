@@ -5,6 +5,7 @@ interface StmtVisitor {
     fun visitExpressionStmt(expressionStmt: ExpressionStmt)
     fun visitPrintStmt(printStmt: PrintStmt)
     fun visitBlockStmt(blockStmt: BlockStmt)
+    fun visitIfStmt(ifStmt: IfStmt)
 }
 
 class Program(val statements: List<Stmt>) {
@@ -49,8 +50,30 @@ class PrintStmt(val expression: Expr) : NonDeclStmt() {
 
 class BlockStmt(val statements: List<Stmt>) : NonDeclStmt() {
 
+    private var _hasDecl = false
+
+    val hasDeclarations: Boolean
+        get() = _hasDecl
+
+    init {
+        for (stmt in statements) {
+            if (stmt is VarDeclStmt) {
+                _hasDecl = true
+                break
+            }
+        }
+    }
+
     override fun accept(visitor: StmtVisitor) {
         visitor.visitBlockStmt(this)
+    }
+
+}
+
+class IfStmt(val condition: Expr, val thenBranch: NonDeclStmt, val elseBranch: NonDeclStmt?) : NonDeclStmt() {
+
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitIfStmt(this)
     }
 
 }

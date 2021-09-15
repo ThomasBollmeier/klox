@@ -91,6 +91,6 @@ class Str(private val value: String) : Value() {
         }
     }
 
-    override fun toString() = "\"$value\""
+    override fun toString() = value
 }
 
