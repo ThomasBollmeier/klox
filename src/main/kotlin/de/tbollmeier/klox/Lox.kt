@@ -39,25 +39,43 @@ object Lox {
     }
 
     private fun run(source: String, exprAllowed: Boolean = false) {
-        reset()
-        loggingOn = false
-        val program = parse(source)
-        loggingOn = true
-        if (!hadError) {
-            interpreter.interpret(program)
-        } else if (exprAllowed) {
-            // check for expression
-            reset()
-            val expr = parseExpr(source)
-            if (expr != null) {
-                try {
-                    println(interpreter.evaluate(expr))
-                } catch (error: InterpreterError) {
-                    runtimeError(error)
-                }
-            }
+
+        if (exprAllowed) {
+            loggingOn = false
+            val success = runExpression(source)
+            loggingOn = true
+            if (success) return
         }
 
+        runProgram(source)
+    }
+
+    private fun runExpression(source: String): Boolean {
+        reset()
+        val expr = parseExpr(source)
+        return if (expr != null) {
+            try {
+                println(interpreter.evaluate(expr))
+                true
+            } catch (error: InterpreterError) {
+                runtimeError(error)
+                false
+            }
+        } else {
+            false
+        }
+    }
+
+    private fun runProgram(source: String) {
+        reset()
+        val program = parse(source)
+        if (!hadError) {
+            try {
+                interpreter.interpret(program)
+            } catch (error: InterpreterError) {
+                runtimeError(error)
+            }
+        }
     }
 
     fun error(line: Int, message: String) {
@@ -79,9 +97,11 @@ object Lox {
         hadError = true
     }
 
-    fun runtimeError(error: InterpreterError) {
-        val message = "${error.message} \n[line ${error.token.line}]"
-        System.err.println(message)
+    private fun runtimeError(error: InterpreterError) {
+        if (loggingOn) {
+            val message = "${error.message} \n[line ${error.token.line}]"
+            System.err.println(message)
+        }
         hadRuntimeError = true
     }
 
