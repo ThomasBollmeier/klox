@@ -7,10 +7,26 @@ class ParserTest {
 
     @Test
     fun `parses program successfully`() {
+        testExpression(
+            "2 + 20 * (4 - 2)",
+            "(+ 2.0 (* 20.0 (group (- 4.0 2.0))))"
+        )
+    }
 
-        val code = "2 + 20 * (4 - 2);"
+    @Test
+    fun `parses logical expression`() {
 
-        val scanner = Scanner(code)
+        testExpression(
+            "a == 1 and b == 2 or c < 3",
+            "(or (and (== (var a) 1.0) (== (var b) 2.0)) (< (var c) 3.0))"
+        )
+
+    }
+
+    private fun testExpression(expr: String, expectedAst: String) {
+
+        val source = "$expr;"
+        val scanner = Scanner(source)
         val tokens = scanner.scanTokens()
         val parser = Parser(tokens)
         val program = parser.parse()
@@ -21,10 +37,8 @@ class ParserTest {
 
         assertNotNull(exprStmt)
 
-        val expected = "(+ 2.0 (* 20.0 (group (- 4.0 2.0))))"
-        val actual = AstPrinter().print(exprStmt!!.expression)
+        assertEquals(AstPrinter().print(exprStmt!!.expression), expectedAst)
 
-        assertEquals(actual, expected)
     }
 
 }

@@ -88,6 +88,18 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `shortcut evaluation works`() {
+
+        testCode("""
+            print "hi" or 2;
+            print nil or "yes";
+            print "hello" and 2;
+            print nil and "yes";
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

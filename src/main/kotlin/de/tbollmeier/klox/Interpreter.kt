@@ -161,4 +161,24 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         environment.assign(assign.name, value)
         return value
     }
+
+    override fun visitLogicalExpr(logical: Logical): Value {
+        val left = logical.left.accept(this)
+        return when (logical.operator.tokenType) {
+            OR -> {
+                if (left.isTruthy()) {
+                    left
+                } else {
+                    logical.right.accept(this)
+                }
+            }
+            else -> {
+                if (!left.isTruthy()) {
+                    left
+                } else {
+                    logical.right.accept(this)
+                }
+            }
+        }
+    }
 }
