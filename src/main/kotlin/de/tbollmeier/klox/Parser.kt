@@ -48,12 +48,13 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt
+    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt | whileStmt
     private fun nonDeclStatement(): NonDeclStmt {
         return when {
             match(PRINT) -> printStmt()
             match(LEFT_BRACE) -> blockStmt()
             match(IF) -> ifStmt()
+            match(WHILE) -> whileStmt()
             else -> expressionStmt()
         }
     }
@@ -126,6 +127,24 @@ class Parser(private val tokens: List<Token>) {
         }
 
         return IfStmt(condition, thenBranch, elseBranch)
+    }
+
+    // whileStmt -> "while" "(" expression ")" statement;
+    private fun whileStmt(): WhileStmt {
+
+        val whileToken = previous()
+
+        consume(LEFT_PAREN, "Expected '(' after 'while'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expected ')' after condition.")
+
+        val statement = nonDeclStatement()
+
+        if (statement is BlockStmt && statement.hasDeclarations) {
+            throw error(whileToken, "Declarations in while blocks are not allowed.")
+        }
+
+        return WhileStmt(condition, statement)
     }
 
     // expression -> assignment

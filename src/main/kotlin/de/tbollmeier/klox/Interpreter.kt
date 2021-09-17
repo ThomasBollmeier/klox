@@ -142,6 +142,12 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         }
     }
 
+    override fun visitWhileStmt(whileStmt: WhileStmt) {
+        while (evaluate(whileStmt.condition).isTruthy()) {
+            whileStmt.statement.accept(this)
+        }
+    }
+
     override fun visitVariable(variable: Variable): Value {
         return environment.getValue(variable.name)
     }

@@ -100,6 +100,22 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `while statement works`() {
+
+        testCode("""
+            var i = 0;
+            var n = 5;
+            
+            while (i < n) {
+                print i;
+                i = i + 1;
+            }
+       
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)
