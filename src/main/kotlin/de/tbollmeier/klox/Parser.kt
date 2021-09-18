@@ -157,23 +157,19 @@ class Parser(private val tokens: List<Token>) {
 
         val initializer = initializerStmt()
 
-        val condition = if (match(SEMICOLON)) {
-            null
-        } else {
+        val condition = if (!check(SEMICOLON)) {
             expression()
+        } else {
+            null
         }
-        if (condition != null) {
-            consume(SEMICOLON, "Expected ';' after condition")
-        }
+        consume(SEMICOLON, "Expected ';' after condition")
 
-        val increment = if (match(RIGHT_PAREN)) {
-            null
-        } else {
+        val increment = if (!check(RIGHT_PAREN)) {
             expression()
+        } else {
+            null
         }
-        if (increment != null) {
-            consume(RIGHT_PAREN, "Expected ')' after increment.")
-        }
+        consume(RIGHT_PAREN, "Expected ')' after increment.")
 
         val statement = nonDeclStatement()
 
