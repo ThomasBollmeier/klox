@@ -148,6 +148,29 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         }
     }
 
+    override fun visitForStmt(forStmt: ForStmt) {
+
+        environment = Environment(environment)
+
+        try {
+
+            forStmt.initializer?.accept(this)
+
+            while (true) {
+                if (forStmt.condition != null && !evaluate(forStmt.condition).isTruthy()) {
+                    break
+                }
+                forStmt.statement.accept(this)
+                if (forStmt.increment != null) {
+                    evaluate(forStmt.increment)
+                }
+            }
+
+        } finally {
+            environment = environment.enclosing!!
+        }
+    }
+
     override fun visitVariable(variable: Variable): Value {
         return environment.getValue(variable.name)
     }

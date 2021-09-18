@@ -116,6 +116,21 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `for loop works`() {
+
+        testCode("""
+            
+            for (var i = 10; i > -1; i = i - 1) {
+                print i;
+            }
+            
+            print "Lift off!";
+       
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

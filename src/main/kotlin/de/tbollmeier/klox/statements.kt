@@ -7,6 +7,7 @@ interface StmtVisitor {
     fun visitBlockStmt(blockStmt: BlockStmt)
     fun visitIfStmt(ifStmt: IfStmt)
     fun visitWhileStmt(whileStmt: WhileStmt)
+    fun visitForStmt(forStmt: ForStmt)
 }
 
 class Program(val statements: List<Stmt>) {
@@ -83,6 +84,19 @@ class WhileStmt(val condition: Expr, val statement: NonDeclStmt) : NonDeclStmt()
 
     override fun accept(visitor: StmtVisitor) {
         visitor.visitWhileStmt(this)
+    }
+
+}
+
+class ForStmt(
+    val initializer: Stmt?,
+    val condition: Expr?,
+    val increment: Expr?,
+    val statement: NonDeclStmt
+) : NonDeclStmt() {
+
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitForStmt(this)
     }
 
 }

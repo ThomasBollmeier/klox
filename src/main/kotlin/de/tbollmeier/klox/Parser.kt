@@ -13,7 +13,7 @@ fun parseExpr(code: String): Expr? {
     }
 }
 
-class ParseError() : RuntimeException()
+class ParseError : RuntimeException()
 
 class Parser(private val tokens: List<Token>) {
 
@@ -48,13 +48,14 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt | whileStmt
+    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt | whileStmt | forStmt
     private fun nonDeclStatement(): NonDeclStmt {
         return when {
             match(PRINT) -> printStmt()
             match(LEFT_BRACE) -> blockStmt()
             match(IF) -> ifStmt()
             match(WHILE) -> whileStmt()
+            match(FOR) -> forStmt()
             else -> expressionStmt()
         }
     }
@@ -102,7 +103,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     // ifStmt -> "if" "(" expression ")" nonDeclStatement ("else" nonDeclStatement)?
-    fun ifStmt(): IfStmt {
+    private fun ifStmt(): IfStmt {
 
         val ifToken = previous()
 
@@ -145,6 +146,48 @@ class Parser(private val tokens: List<Token>) {
         }
 
         return WhileStmt(condition, statement)
+    }
+
+    // forStmt -> "for" "(" initializer expression? ";" expression? ")" statement
+    private fun forStmt(): ForStmt {
+
+        val forToken = previous()
+
+        consume(LEFT_PAREN, "Expected '(' after 'for'.")
+
+        val initializer = initializerStmt()
+
+        val condition = if (match(SEMICOLON)) {
+            null
+        } else {
+            expression()
+        }
+        if (condition != null) {
+            consume(SEMICOLON, "Expected ';' after condition")
+        }
+
+        val increment = if (match(RIGHT_PAREN)) {
+            null
+        } else {
+            expression()
+        }
+        if (increment != null) {
+            consume(RIGHT_PAREN, "Expected ')' after increment.")
+        }
+
+        val statement = nonDeclStatement()
+
+        if (statement is BlockStmt && statement.hasDeclarations) {
+            throw error(forToken, "Declarations in for blocks are not allowed.")
+        }
+
+        return ForStmt(initializer, condition, increment, statement)
+    }
+
+    private fun initializerStmt() = when {
+        match(VAR) -> varDeclStmt()
+        match(SEMICOLON) -> null
+        else -> expressionStmt()
     }
 
     // expression -> assignment
