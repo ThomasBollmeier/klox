@@ -10,6 +10,8 @@ class Scanner(private val source: String) {
 
     private val reservedWords = mapOf<String, TokenType>(
         "and" to AND,
+        "break" to BREAK,
+        "continue" to CONTINUE,
         "class" to CLASS,
         "else" to ELSE,
         "false" to FALSE,

@@ -121,12 +121,56 @@ class InterpreterTest {
 
         testCode("""
             
-            for (var i = 10; i > -1; i = i - 1) {
+            var a = 0;
+            var temp;
+            
+            for (var b = 1; a < 10000; b = temp + b) {
+                print a;
+                temp = a;
+                a = b;
+            }
+            
+        """.trimIndent())
+
+    }
+
+    @Test
+    fun `break and continue in loops works`() {
+
+        testCode("""
+            
+            print "BREAK:";
+            print "";
+            
+            for (var i = 0; i < 10; i = i + 1) {
+                if (i == 5 or i == 7) break;
                 print i;
             }
             
-            print "Lift off!";
-       
+            print "";
+            print "CONTINUE:";
+            print "";
+            
+            for (var i = 0; i < 10; i = i + 1) {
+                if (i == 5 or i == 7) continue;
+                print i;
+            }
+            
+            print "";
+            print "NESTING:";
+            
+            for (var i = 0; i < 4; i = i + 1) {
+                if (i == 1) continue;
+                for (var j = i; j < 10; j = j + 1) {
+                    if (i + j > 5) {
+                        break;
+                    }
+                    print i;
+                    print j;
+                    print "";
+                }
+            }
+            
         """.trimIndent())
 
     }

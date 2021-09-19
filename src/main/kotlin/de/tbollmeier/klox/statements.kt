@@ -8,6 +8,8 @@ interface StmtVisitor {
     fun visitIfStmt(ifStmt: IfStmt)
     fun visitWhileStmt(whileStmt: WhileStmt)
     fun visitForStmt(forStmt: ForStmt)
+    fun visitBreakStmt(breakStmt: BreakStmt)
+    fun visitContinueStmt(continueStmt: ContinueStmt)
 }
 
 class Program(val statements: List<Stmt>) {
@@ -99,4 +101,16 @@ class ForStmt(
         visitor.visitForStmt(this)
     }
 
+}
+
+class BreakStmt: NonDeclStmt() {
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitBreakStmt(this)
+    }
+}
+
+class ContinueStmt: NonDeclStmt() {
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitContinueStmt(this)
+    }
 }

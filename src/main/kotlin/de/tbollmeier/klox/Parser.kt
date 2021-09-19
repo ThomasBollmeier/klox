@@ -18,6 +18,7 @@ class ParseError : RuntimeException()
 class Parser(private val tokens: List<Token>) {
 
     private var current = 0
+    private var loopNesting = 0
 
     fun parse(): Program {
         return program()
@@ -48,7 +49,8 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt | whileStmt | forStmt
+    // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt |
+    // whileStmt | forStmt | breakStmt | continueStmt
     private fun nonDeclStatement(): NonDeclStmt {
         return when {
             match(PRINT) -> printStmt()
@@ -56,6 +58,8 @@ class Parser(private val tokens: List<Token>) {
             match(IF) -> ifStmt()
             match(WHILE) -> whileStmt()
             match(FOR) -> forStmt()
+            match(BREAK) -> breakStmt()
+            match(CONTINUE) -> continueStmt()
             else -> expressionStmt()
         }
     }
@@ -135,17 +139,25 @@ class Parser(private val tokens: List<Token>) {
 
         val whileToken = previous()
 
-        consume(LEFT_PAREN, "Expected '(' after 'while'.")
-        val condition = expression()
-        consume(RIGHT_PAREN, "Expected ')' after condition.")
+        try {
+            loopNesting++
 
-        val statement = nonDeclStatement()
+            consume(LEFT_PAREN, "Expected '(' after 'while'.")
+            val condition = expression()
+            consume(RIGHT_PAREN, "Expected ')' after condition.")
 
-        if (statement is BlockStmt && statement.hasDeclarations) {
-            throw error(whileToken, "Declarations in while blocks are not allowed.")
+            val statement = nonDeclStatement()
+
+            if (statement is BlockStmt && statement.hasDeclarations) {
+                throw error(whileToken, "Declarations in while blocks are not allowed.")
+            }
+
+            return WhileStmt(condition, statement)
+
+        } finally {
+            loopNesting--
         }
 
-        return WhileStmt(condition, statement)
     }
 
     // forStmt -> "for" "(" initializer expression? ";" expression? ")" statement
@@ -153,37 +165,66 @@ class Parser(private val tokens: List<Token>) {
 
         val forToken = previous()
 
-        consume(LEFT_PAREN, "Expected '(' after 'for'.")
+        try {
+            loopNesting++
 
-        val initializer = initializerStmt()
+            consume(LEFT_PAREN, "Expected '(' after 'for'.")
 
-        val condition = if (!check(SEMICOLON)) {
-            expression()
-        } else {
-            null
+            val initializer = initializerStmt()
+
+            val condition = if (!check(SEMICOLON)) {
+                expression()
+            } else {
+                Literal(true)
+            }
+            consume(SEMICOLON, "Expected ';' after condition")
+
+            val increment = if (!check(RIGHT_PAREN)) {
+                expression()
+            } else {
+                null
+            }
+            consume(RIGHT_PAREN, "Expected ')' after increment.")
+
+            val statement = nonDeclStatement()
+
+            if (statement is BlockStmt && statement.hasDeclarations) {
+                throw error(forToken, "Declarations in for blocks are not allowed.")
+            }
+
+            return ForStmt(initializer, condition, increment, statement)
+
+        } finally {
+            loopNesting--
         }
-        consume(SEMICOLON, "Expected ';' after condition")
-
-        val increment = if (!check(RIGHT_PAREN)) {
-            expression()
-        } else {
-            null
-        }
-        consume(RIGHT_PAREN, "Expected ')' after increment.")
-
-        val statement = nonDeclStatement()
-
-        if (statement is BlockStmt && statement.hasDeclarations) {
-            throw error(forToken, "Declarations in for blocks are not allowed.")
-        }
-
-        return ForStmt(initializer, condition, increment, statement)
     }
 
     private fun initializerStmt() = when {
         match(VAR) -> varDeclStmt()
         match(SEMICOLON) -> null
         else -> expressionStmt()
+    }
+
+    // breakStmt -> "break" ";"
+    private fun breakStmt(): BreakStmt {
+        val breakToken = previous()
+        return if (loopNesting > 0) {
+            consume(SEMICOLON, "Expected ;' after 'break'.")
+            BreakStmt()
+        } else {
+            throw error(breakToken, "'break' must only be used within loops.")
+        }
+    }
+
+    // continueStmt -> "continue" ";"
+    private fun continueStmt(): NonDeclStmt {
+        val continueToken = previous()
+        return if (loopNesting > 0) {
+            consume(SEMICOLON, "Expected ;' after 'continue'.")
+            ContinueStmt()
+        } else {
+            throw error(continueToken, "'continue' must only be used within loops.")
+        }
     }
 
     // expression -> assignment

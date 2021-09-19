@@ -1,12 +1,18 @@
 package de.tbollmeier.klox
 
 import de.tbollmeier.klox.TokenType.*
+import java.util.*
 
 class InterpreterError(val token: Token, message: String) : RuntimeException(message)
+
+class BreakEvent : RuntimeException()
+
+class ContinueEvent : RuntimeException()
 
 class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     private var environment = Environment()
+    private val whileBodies = Stack<NonDeclStmt>()
 
     fun interpret(program: Program) {
         program.accept(this)
@@ -127,7 +133,17 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     override fun visitBlockStmt(blockStmt: BlockStmt) {
         environment = Environment(environment)
         try {
-            blockStmt.statements.forEach { it.accept(this) }
+            for (stmt in blockStmt.statements) {
+                try {
+                    stmt.accept(this)
+                } catch (evt: ContinueEvent) {
+                    if (whileBodies.peek() == blockStmt) {
+                        return
+                    } else {
+                        throw evt
+                    }
+                }
+            }
         } finally {
             environment = environment.enclosing!!
         }
@@ -143,16 +159,25 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitWhileStmt(whileStmt: WhileStmt) {
-        while (evaluate(whileStmt.condition).isTruthy()) {
-            whileStmt.statement.accept(this)
+        try {
+            whileBodies.push(whileStmt.statement)
+            while (evaluate(whileStmt.condition).isTruthy()) {
+                try {
+                    whileStmt.statement.accept(this)
+                } catch (evt: BreakEvent) {
+                    break
+                }
+            }
+        } finally {
+            whileBodies.pop()
         }
     }
 
     override fun visitForStmt(forStmt: ForStmt) {
 
-        environment = Environment(environment)
-
         try {
+            environment = Environment(environment)
+            whileBodies.push(forStmt.statement)
 
             forStmt.initializer?.accept(this)
 
@@ -160,7 +185,13 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
                 if (forStmt.condition != null && !evaluate(forStmt.condition).isTruthy()) {
                     break
                 }
-                forStmt.statement.accept(this)
+
+                try {
+                    forStmt.statement.accept(this)
+                } catch (evt: BreakEvent) {
+                    break
+                }
+
                 if (forStmt.increment != null) {
                     evaluate(forStmt.increment)
                 }
@@ -168,7 +199,16 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
         } finally {
             environment = environment.enclosing!!
+            whileBodies.pop()
         }
+    }
+
+    override fun visitBreakStmt(breakStmt: BreakStmt) {
+        throw BreakEvent()
+    }
+
+    override fun visitContinueStmt(continueStmt: ContinueStmt) {
+        throw ContinueEvent()
     }
 
     override fun visitVariable(variable: Variable): Value {
