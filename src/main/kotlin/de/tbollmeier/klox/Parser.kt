@@ -315,15 +315,45 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
-    // unary -> ("!" | "-") unary | primary
+    // unary -> ("!" | "-") unary | call
     private fun unary(): Expr {
         return if (match(BANG, MINUS)) {
             val operator = previous()
             val right = unary()
             Unary(operator, right)
         } else {
-            primary()
+            call()
         }
+    }
+
+    // call -> primary ( "(" arguments? ")" )*
+    private fun call(): Expr {
+        var expr = primary()
+
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr)
+            } else {
+                break
+            }
+        }
+
+        return expr
+    }
+
+    private fun finishCall(callee: Expr): Expr {
+        val maxNumArgs = 255
+        val arguments = mutableListOf<Expr>()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size > maxNumArgs) {
+                    error(previous(), "Can't have more that $maxNumArgs arguments.")
+                }
+                arguments.add(expression())
+            } while (match(COMMA))
+        }
+        val closingParen = consume(RIGHT_PAREN, "Expected ')' after arguments.")
+        return Call(callee, closingParen, arguments)
     }
 
     // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER

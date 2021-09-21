@@ -33,4 +33,13 @@ class AstPrinter : ExprVisitor<String> {
     override fun visitLogicalExpr(logical: Logical): String {
         return "(${logical.operator.lexeme} ${print(logical.left)} ${print(logical.right)})"
     }
+
+    override fun visitCallExpr(call: Call): String {
+        var ret = "(call ${print(call.callee)}"
+        for (arg in call.arguments) {
+            ret += " ${print(arg)}"
+        }
+        ret += ")"
+        return ret
+    }
 }

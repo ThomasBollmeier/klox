@@ -23,6 +23,16 @@ class ParserTest {
 
     }
 
+    @Test
+    fun `parses call expression`() {
+
+        testExpression(
+            expr = "f(0)(g(x))",
+            expectedAst = "(call (call (var f) 0.0) (call (var g) (var x)))"
+        )
+
+    }
+
     private fun testExpression(expr: String, expectedAst: String) {
 
         val source = "$expr;"

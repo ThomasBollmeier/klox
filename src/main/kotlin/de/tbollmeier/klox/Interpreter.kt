@@ -250,4 +250,8 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
             }
         }
     }
+
+    override fun visitCallExpr(call: Call): Value {
+        TODO("Not yet implemented")
+    }
 }
