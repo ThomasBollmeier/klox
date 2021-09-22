@@ -2,7 +2,7 @@ package de.tbollmeier.klox
 
 import kotlin.math.abs
 
-sealed class Value() {
+sealed class Value {
 
     open fun isTruthy() = true
 
@@ -12,7 +12,7 @@ sealed class Value() {
 
 }
 
-class Nil() : Value() {
+class Nil : Value() {
 
     override fun isTruthy() = false
 
@@ -92,5 +92,27 @@ class Str(private val value: String) : Value() {
     }
 
     override fun toString() = value
+}
+
+interface Callable {
+    fun call (interpreter: Interpreter, arguments: List<Value>): Value
+}
+
+class Function : Value(), Callable {
+
+    override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
+        val args = arguments.joinToString(", ") { it.toString() }
+        println("Calling function with $args")
+        return Nil()
+    }
+
+    override fun isEqual(other: Value): Bool {
+        return if (other is Function) {
+            Bool(this === other)
+        } else {
+            Bool(false)
+        }
+    }
+
 }
 

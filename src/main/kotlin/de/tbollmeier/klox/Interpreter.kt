@@ -252,6 +252,14 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitCallExpr(call: Call): Value {
-        TODO("Not yet implemented")
+        val callee = evaluate(call.callee)
+        val arguments = call.arguments.map { evaluate(it) }
+
+        if (callee is Callable) {
+            return callee.call(this, arguments)
+        } else {
+            throw InterpreterError(call.closingParen, "Can only call functions and classes.")
+        }
     }
+
 }
