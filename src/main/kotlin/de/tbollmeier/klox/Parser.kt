@@ -36,10 +36,11 @@ class Parser(private val tokens: List<Token>) {
         return Program(statements)
     }
 
-    // statement -> varDeclStmt | nonDeclStatement
+    // statement -> funDeclStmt | varDeclStmt | nonDeclStatement
     private fun statement(): Stmt? {
         return try {
             when {
+                match(FUN) -> function("function")
                 match(VAR) -> varDeclStmt()
                 else -> nonDeclStatement()
             }
@@ -47,6 +48,27 @@ class Parser(private val tokens: List<Token>) {
             synchronize()
             null
         }
+    }
+
+    // function -> IDENTIFIER "(" (IDENTIFIER ("," IDENTIFIER)* )? ")" block
+    private fun function(kind: String): FunctionDeclStmt {
+
+        val name = consume(IDENTIFIER, "Expected identifier as $kind name.")
+        consume(LEFT_PAREN, "Expected '(' after $kind name")
+        val parameters = mutableListOf<Token>()
+        while (!check(RIGHT_PAREN)) {
+            var parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
+            parameters.add(parameter)
+            while (check(COMMA)) {
+                consume(COMMA, "Expected comma.")
+                parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
+                parameters.add(parameter)
+            }
+        }
+        consume(RIGHT_PAREN, "Expected ')' after parameter list.")
+        val block = blockStmt()
+
+        return FunctionDeclStmt(name, parameters, block)
     }
 
     // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt |
@@ -64,7 +86,7 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // varDeclStmt -> "VAR" IDENTIFIER ("=" expression)? ";"
+    // varDeclStmt -> "var" IDENTIFIER ("=" expression)? ";"
     private fun varDeclStmt(): Stmt {
         val name = consume(IDENTIFIER, "Expected variable name.")
         val initializer = if (match(EQUAL)) {

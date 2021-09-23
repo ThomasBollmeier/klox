@@ -14,6 +14,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     private var environment = Environment()
     private val whileBodies = Stack<NonDeclStmt>()
 
+    init {
+        initBuiltinFunctions(environment)
+    }
+
     fun interpret(program: Program) {
         program.accept(this)
     }
@@ -225,6 +229,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         environment.define(name, value)
     }
 
+    override fun visitFuncDeclStmt(funcDeclStmt: FunctionDeclStmt) {
+        TODO("Not yet implemented")
+    }
+
     override fun visitAssignExpr(assign: Assign): Value {
         val value = evaluate(assign.value)
         environment.assign(assign.name, value)
@@ -256,6 +264,12 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         val arguments = call.arguments.map { evaluate(it) }
 
         if (callee is Callable) {
+            val numParameters = callee.arity()
+            val numArgs = arguments.size
+            if (numArgs != numParameters) {
+                val message = "Expected $numParameters arguments but got $numArgs."
+                throw InterpreterError(call.closingParen, message)
+            }
             return callee.call(this, arguments)
         } else {
             throw InterpreterError(call.closingParen, "Can only call functions and classes.")

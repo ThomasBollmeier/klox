@@ -175,6 +175,24 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `calls to builtin functions work`() {
+
+        testCode("""
+            
+            var start = clock();
+            
+            // Do something:
+            for (var i = 0; i < 1000000; i = i + 1) { }
+            
+            var end = clock();
+            
+            print end - start;
+            
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

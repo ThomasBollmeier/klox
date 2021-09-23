@@ -2,7 +2,7 @@ package de.tbollmeier.klox
 
 import kotlin.math.abs
 
-sealed class Value {
+abstract class Value {
 
     open fun isTruthy() = true
 
@@ -95,10 +95,15 @@ class Str(private val value: String) : Value() {
 }
 
 interface Callable {
+    fun arity(): Int
     fun call (interpreter: Interpreter, arguments: List<Value>): Value
 }
 
 class Function : Value(), Callable {
+
+    override fun arity(): Int {
+        TODO("Not yet implemented")
+    }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
         val args = arguments.joinToString(", ") { it.toString() }
