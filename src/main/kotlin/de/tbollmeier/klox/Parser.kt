@@ -56,7 +56,7 @@ class Parser(private val tokens: List<Token>) {
         val name = consume(IDENTIFIER, "Expected identifier as $kind name.")
         consume(LEFT_PAREN, "Expected '(' after $kind name")
         val parameters = mutableListOf<Token>()
-        while (!check(RIGHT_PAREN)) {
+        if (!check(RIGHT_PAREN)) {
             var parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
             parameters.add(parameter)
             while (check(COMMA)) {
