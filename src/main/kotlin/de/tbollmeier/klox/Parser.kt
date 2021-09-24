@@ -19,6 +19,7 @@ class Parser(private val tokens: List<Token>) {
 
     private var current = 0
     private var loopNesting = 0
+    private val  maxNumArgs = 255
 
     fun parse(): Program {
         return program()
@@ -62,10 +63,15 @@ class Parser(private val tokens: List<Token>) {
             while (check(COMMA)) {
                 consume(COMMA, "Expected comma.")
                 parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
+                if (parameters.size > maxNumArgs) {
+                    error(previous(), "Can't have more that $maxNumArgs parameters.")
+                }
                 parameters.add(parameter)
             }
         }
         consume(RIGHT_PAREN, "Expected ')' after parameter list.")
+
+        consume(LEFT_BRACE, "Expected function block to start with '{'.")
         val block = blockStmt()
 
         return FunctionDeclStmt(name, parameters, block)
@@ -364,7 +370,6 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun finishCall(callee: Expr): Expr {
-        val maxNumArgs = 255
         val arguments = mutableListOf<Expr>()
         if (!check(RIGHT_PAREN)) {
             do {

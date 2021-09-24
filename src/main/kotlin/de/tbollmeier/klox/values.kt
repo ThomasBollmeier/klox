@@ -96,19 +96,30 @@ class Str(private val value: String) : Value() {
 
 interface Callable {
     fun arity(): Int
-    fun call (interpreter: Interpreter, arguments: List<Value>): Value
+    fun call(interpreter: Interpreter, arguments: List<Value>): Value
 }
 
-class Function : Value(), Callable {
+class Function(
+    private val name: String,
+    private val parameters: List<String>,
+    private val block: BlockStmt
+) : Value(), Callable {
 
     override fun arity(): Int {
-        TODO("Not yet implemented")
+        return parameters.size
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
-        val args = arguments.joinToString(", ") { it.toString() }
-        println("Calling function with $args")
-        return Nil()
+        try {
+            val env = interpreter.newScope()
+            parameters.zip(arguments).forEach {
+                env.define(it.first, it.second)
+            }
+            block.accept(interpreter)
+            return Nil()
+        } finally {
+            interpreter.closeScope()
+        }
     }
 
     override fun isEqual(other: Value): Bool {
@@ -117,6 +128,11 @@ class Function : Value(), Callable {
         } else {
             Bool(false)
         }
+    }
+
+    override fun toString(): String {
+        val paramsStr = parameters.joinToString(", ")
+        return "<fun $name($paramsStr)>"
     }
 
 }

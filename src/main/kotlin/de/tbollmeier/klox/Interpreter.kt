@@ -24,6 +24,15 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     fun evaluate(expression: Expr) = expression.accept(this)
 
+    fun newScope(): Environment {
+        environment = Environment(environment)
+        return environment
+    }
+
+    fun closeScope() {
+        environment = environment.enclosing!!
+    }
+
     override fun visitBinaryExpr(binary: Binary): Value {
         val left = evaluate(binary.left)
         val right = evaluate(binary.right)
@@ -230,7 +239,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitFuncDeclStmt(funcDeclStmt: FunctionDeclStmt) {
-        TODO("Not yet implemented")
+        val name = funcDeclStmt.name.lexeme
+        val parameters = funcDeclStmt.parameters.map { it.lexeme }
+        val block = funcDeclStmt.block
+        environment.define(name, Function(name, parameters, block))
     }
 
     override fun visitAssignExpr(assign: Assign): Value {

@@ -193,6 +193,22 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `calls to custom functions work`() {
+
+        testCode("""
+            
+            fun add(a, b) {
+                var sum = a + b;
+                print sum;
+            }
+            
+            add(1, 41);
+                        
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)
