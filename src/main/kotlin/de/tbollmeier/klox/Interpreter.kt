@@ -9,6 +9,8 @@ class BreakEvent : RuntimeException()
 
 class ContinueEvent : RuntimeException()
 
+class ReturnEvent(val value: Value) : RuntimeException()
+
 class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     private var environment = Environment()
@@ -222,6 +224,15 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     override fun visitContinueStmt(continueStmt: ContinueStmt) {
         throw ContinueEvent()
+    }
+
+    override fun visitReturnStmt(returnStmt: ReturnStmt) {
+        val value = if (returnStmt.expr != null) {
+            evaluate(returnStmt.expr)
+        } else {
+            Nil()
+        }
+        throw ReturnEvent(value)
     }
 
     override fun visitVariable(variable: Variable): Value {

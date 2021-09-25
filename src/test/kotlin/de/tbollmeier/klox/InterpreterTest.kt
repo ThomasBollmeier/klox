@@ -208,6 +208,23 @@ class InterpreterTest {
         """.trimIndent())
 
     }
+    @Test
+    fun `custom functions with result work`() {
+
+        testCode("""
+             
+             fun fib(n) {
+                if (n <= 1) return n;
+                return fib(n - 2) + fib(n - 1);
+             }
+             
+             for (var i = 0; i < 20; i = i + 1) {
+                print fib(i);
+             }
+                        
+        """.trimIndent())
+
+    }
 
     private fun testCode(code: String) {
         val program = parse(code)

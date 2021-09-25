@@ -19,6 +19,7 @@ class Parser(private val tokens: List<Token>) {
 
     private var current = 0
     private var loopNesting = 0
+    private var funcNesting = 0
     private val  maxNumArgs = 255
 
     fun parse(): Program {
@@ -72,13 +73,18 @@ class Parser(private val tokens: List<Token>) {
         consume(RIGHT_PAREN, "Expected ')' after parameter list.")
 
         consume(LEFT_BRACE, "Expected function block to start with '{'.")
-        val block = blockStmt()
 
-        return FunctionDeclStmt(name, parameters, block)
+        try {
+            funcNesting++
+            val block = blockStmt()
+            return FunctionDeclStmt(name, parameters, block)
+        } finally {
+            funcNesting--
+        }
     }
 
     // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt |
-    // whileStmt | forStmt | breakStmt | continueStmt
+    // whileStmt | forStmt | breakStmt | continueStmt | returnStmt
     private fun nonDeclStatement(): NonDeclStmt {
         return when {
             match(PRINT) -> printStmt()
@@ -88,6 +94,7 @@ class Parser(private val tokens: List<Token>) {
             match(FOR) -> forStmt()
             match(BREAK) -> breakStmt()
             match(CONTINUE) -> continueStmt()
+            match(RETURN) -> returnStmt()
             else -> expressionStmt()
         }
     }
@@ -252,6 +259,22 @@ class Parser(private val tokens: List<Token>) {
             ContinueStmt()
         } else {
             throw error(continueToken, "'continue' must only be used within loops.")
+        }
+    }
+
+    // returnStmt -> "return" expression? ";"
+    private fun returnStmt(): ReturnStmt {
+        val returnToken = previous()
+        return if (funcNesting > 0) {
+            val expr = if (!check(SEMICOLON)) {
+                expression()
+            } else {
+                null
+            }
+            consume(SEMICOLON, "Expected ';' at end of return statement.")
+            ReturnStmt(expr)
+        } else {
+            throw error(returnToken, "'return' must only be used within functions.")
         }
     }
 

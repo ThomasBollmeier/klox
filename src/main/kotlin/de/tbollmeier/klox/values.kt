@@ -115,8 +115,12 @@ class Function(
             parameters.zip(arguments).forEach {
                 env.define(it.first, it.second)
             }
-            block.accept(interpreter)
-            return Nil()
+            return try {
+                block.accept(interpreter)
+                Nil()
+            } catch (ret: ReturnEvent) {
+                ret.value
+            }
         } finally {
             interpreter.closeScope()
         }

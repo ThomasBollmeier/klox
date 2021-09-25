@@ -11,6 +11,7 @@ interface StmtVisitor {
     fun visitForStmt(forStmt: ForStmt)
     fun visitBreakStmt(breakStmt: BreakStmt)
     fun visitContinueStmt(continueStmt: ContinueStmt)
+    fun visitReturnStmt(returnStmt: ReturnStmt)
 }
 
 class Program(val statements: List<Stmt>) {
@@ -121,5 +122,11 @@ class BreakStmt: NonDeclStmt() {
 class ContinueStmt: NonDeclStmt() {
     override fun accept(visitor: StmtVisitor) {
         visitor.visitContinueStmt(this)
+    }
+}
+
+class ReturnStmt(val expr: Expr? = null): NonDeclStmt() {
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitReturnStmt(this)
     }
 }
