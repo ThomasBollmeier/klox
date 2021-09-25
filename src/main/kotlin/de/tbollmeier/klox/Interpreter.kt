@@ -13,7 +13,7 @@ class ReturnEvent(val value: Value) : RuntimeException()
 
 class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
-    private var environment = Environment()
+    var environment = Environment()
     private val whileBodies = Stack<NonDeclStmt>()
 
     init {
@@ -253,7 +253,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         val name = funcDeclStmt.name.lexeme
         val parameters = funcDeclStmt.parameters.map { it.lexeme }
         val block = funcDeclStmt.block
-        environment.define(name, Function(name, parameters, block))
+        environment.define(name, Function(name, parameters, block, environment))
     }
 
     override fun visitAssignExpr(assign: Assign): Value {

@@ -102,7 +102,8 @@ interface Callable {
 class Function(
     private val name: String,
     private val parameters: List<String>,
-    private val block: BlockStmt
+    private val block: BlockStmt,
+    private val closure: Environment
 ) : Value(), Callable {
 
     override fun arity(): Int {
@@ -110,7 +111,9 @@ class Function(
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
+        val oldEnv = interpreter.environment
         try {
+            interpreter.environment = Environment(closure)
             val env = interpreter.newScope()
             parameters.zip(arguments).forEach {
                 env.define(it.first, it.second)
@@ -122,7 +125,7 @@ class Function(
                 ret.value
             }
         } finally {
-            interpreter.closeScope()
+            interpreter.environment = oldEnv
         }
     }
 
