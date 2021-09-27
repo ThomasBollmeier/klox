@@ -20,7 +20,7 @@ class Parser(private val tokens: List<Token>) {
     private var current = 0
     private var loopNesting = 0
     private var funcNesting = 0
-    private val  maxNumArgs = 255
+    private val maxNumArgs = 255
 
     fun parse(): Program {
         return program()
@@ -42,9 +42,19 @@ class Parser(private val tokens: List<Token>) {
     private fun statement(): Stmt? {
         return try {
             when {
-                match(FUN) -> function("function")
                 match(VAR) -> varDeclStmt()
-                else -> nonDeclStatement()
+                else -> {
+                    if (check(FUN)) {
+                        if (peekNext()?.tokenType == IDENTIFIER) {
+                            consume(FUN, "")
+                            function("function")
+                        } else {
+                            expressionStmt()
+                        }
+                    } else {
+                        nonDeclStatement()
+                    }
+                }
             }
         } catch (error: ParseError) {
             synchronize()
@@ -53,34 +63,11 @@ class Parser(private val tokens: List<Token>) {
     }
 
     // function -> IDENTIFIER "(" (IDENTIFIER ("," IDENTIFIER)* )? ")" block
-    private fun function(kind: String): FunctionDeclStmt {
-
+    private fun function(kind: String): VarDeclStmt {
         val name = consume(IDENTIFIER, "Expected identifier as $kind name.")
-        consume(LEFT_PAREN, "Expected '(' after $kind name")
-        val parameters = mutableListOf<Token>()
-        if (!check(RIGHT_PAREN)) {
-            var parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
-            parameters.add(parameter)
-            while (check(COMMA)) {
-                consume(COMMA, "Expected comma.")
-                parameter = consume(IDENTIFIER, "Parameter must be an identifier.")
-                if (parameters.size > maxNumArgs) {
-                    error(previous(), "Can't have more that $maxNumArgs parameters.")
-                }
-                parameters.add(parameter)
-            }
-        }
-        consume(RIGHT_PAREN, "Expected ')' after parameter list.")
-
-        consume(LEFT_BRACE, "Expected function block to start with '{'.")
-
-        try {
-            funcNesting++
-            val block = blockStmt()
-            return FunctionDeclStmt(name, parameters, block)
-        } finally {
-            funcNesting--
-        }
+        val funExpr = functionExpr(kind)
+        
+        return VarDeclStmt(name, funExpr)
     }
 
     // nonDeclStatement -> expressionStmt | printStmt | blockStnt | ifStmt |
@@ -278,8 +265,40 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // expression -> assignment
-    fun expression() = assignment()
+    // expression -> functionExpr | assignment
+    fun expression() = when {
+        match(FUN) -> functionExpr("function")
+        else -> assignment()
+    }
+
+    private fun functionExpr(kind: String): FunExpr {
+        val parameters = mutableListOf<String>()
+        consume(LEFT_PAREN, "Expected '(' after $kind name")
+        if (!check(RIGHT_PAREN)) {
+            var param = consume(IDENTIFIER, "Parameter must be an identifier.")
+            parameters.add(param.lexeme)
+            while (check(COMMA)) {
+                consume(COMMA, "Expected comma.")
+                param = consume(IDENTIFIER, "Parameter must be an identifier.")
+                if (parameters.size > maxNumArgs) {
+                    error(previous(), "Can't have more that $maxNumArgs parameters.")
+                }
+                parameters.add(param.lexeme)
+            }
+        }
+        consume(RIGHT_PAREN, "Expected ')' after parameter list.")
+
+        consume(LEFT_BRACE, "Expected function block to start with '{'.")
+
+        try {
+            funcNesting++
+            val block = blockStmt()
+            return FunExpr(parameters, block)
+        } finally {
+            funcNesting--
+        }
+
+    }
 
     // assignment -> or ("=" assignment)?
     private fun assignment(): Expr {
@@ -477,6 +496,12 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun peek() = tokens[current]
+
+    private fun peekNext() =
+        if (current + 1 < tokens.size)
+            tokens[current + 1]
+        else
+            null
 
     private fun previous() = tokens[current - 1]
 }

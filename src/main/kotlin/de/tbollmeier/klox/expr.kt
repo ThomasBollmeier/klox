@@ -9,6 +9,7 @@ interface ExprVisitor<R> {
     fun visitUnaryExpr(unary: Unary): R
     fun visitLogicalExpr(logical: Logical): R
     fun visitCallExpr(call: Call): R
+    fun visitFunExpr(fn: FunExpr): R
 }
 
 sealed class Expr() {
@@ -60,5 +61,11 @@ class Logical(val operator: Token, val left: Expr, val right: Expr) : Expr() {
 class Call(val callee: Expr, val closingParen: Token, val arguments: List<Expr>) : Expr() {
     override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
         return exprVisitor.visitCallExpr(this)
+    }
+}
+
+class FunExpr(val parameters: List<String>, val block: BlockStmt) : Expr() {
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitFunExpr(this)
     }
 }

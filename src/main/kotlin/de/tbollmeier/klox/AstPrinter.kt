@@ -42,4 +42,9 @@ class AstPrinter : ExprVisitor<String> {
         ret += ")"
         return ret
     }
+
+    override fun visitFunExpr(fn: FunExpr): String {
+        val params = fn.parameters.joinToString(" ")
+        return "(fun ($params))"
+    }
 }

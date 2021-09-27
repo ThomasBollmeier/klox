@@ -249,13 +249,6 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         environment.define(name, value)
     }
 
-    override fun visitFuncDeclStmt(funcDeclStmt: FunctionDeclStmt) {
-        val name = funcDeclStmt.name.lexeme
-        val parameters = funcDeclStmt.parameters.map { it.lexeme }
-        val block = funcDeclStmt.block
-        environment.define(name, Function(name, parameters, block, environment))
-    }
-
     override fun visitAssignExpr(assign: Assign): Value {
         val value = evaluate(assign.value)
         environment.assign(assign.name, value)
@@ -297,6 +290,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         } else {
             throw InterpreterError(call.closingParen, "Can only call functions and classes.")
         }
+    }
+
+    override fun visitFunExpr(fn: FunExpr): Value {
+        return Function(fn.parameters, fn.block, environment)
     }
 
 }

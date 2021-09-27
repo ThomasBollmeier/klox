@@ -248,6 +248,23 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `anonymous functions work`() {
+
+        testCode("""
+            
+            fun thrice(fn) {
+                for (var i = 1; i <= 3; i = i + 1) {
+                    fn(i);
+                }
+            }
+            
+            thrice(fun (i) { print i; });
+                        
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

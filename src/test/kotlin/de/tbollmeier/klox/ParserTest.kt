@@ -33,6 +33,16 @@ class ParserTest {
 
     }
 
+    @Test
+    fun `function expression`() {
+
+        testExpression(
+            expr = "fun (a, b) { return a + b; }",
+            expectedAst = "(fun (a b))"
+        )
+
+    }
+
     private fun testExpression(expr: String, expectedAst: String) {
 
         val source = "$expr;"

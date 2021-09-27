@@ -100,7 +100,6 @@ interface Callable {
 }
 
 class Function(
-    private val name: String,
     private val parameters: List<String>,
     private val block: BlockStmt,
     private val closure: Environment
@@ -139,7 +138,7 @@ class Function(
 
     override fun toString(): String {
         val paramsStr = parameters.joinToString(", ")
-        return "<fun $name($paramsStr)>"
+        return "<fun ($paramsStr)>"
     }
 
 }
