@@ -265,6 +265,26 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `scopes and closures work`() {
+
+        testCode("""
+            
+            var a = "global";
+            
+            {
+                fun showA() {
+                    print a;
+                }
+                showA();
+                var a = "block";
+                showA();
+            }
+                        
+        """.trimIndent())
+
+    }
+
     private fun testCode(code: String) {
         val program = parse(code)
         assertNotNull(program)

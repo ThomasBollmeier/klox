@@ -20,5 +20,4 @@ class Environment(val enclosing: Environment? = null) {
             else -> throw InterpreterError(name, "Undefined variable '${name.lexeme}'.")
         }
     }
-
 }
