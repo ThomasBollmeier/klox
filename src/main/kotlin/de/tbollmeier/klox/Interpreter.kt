@@ -296,4 +296,8 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         return Function(fn.parameters, fn.block, environment)
     }
 
+    fun resolve(expr: Expr, i: Int) {
+        TODO("Not yet implemented")
+    }
+
 }

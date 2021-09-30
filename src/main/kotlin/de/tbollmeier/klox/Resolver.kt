@@ -7,51 +7,92 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     private val scopes = Stack<Scope>()
 
     override fun visitBinaryExpr(binary: Binary) {
-        TODO("Not yet implemented")
+        binary.left.accept(this)
+        binary.right.accept(this)
     }
 
     override fun visitAssignExpr(assign: Assign) {
-        TODO("Not yet implemented")
+        assign.value.accept(this)
+        resolveLocal(assign, assign.name)
     }
 
     override fun visitGroupingExpr(grouping: Grouping) {
-        TODO("Not yet implemented")
+        grouping.expression.accept(this)
     }
 
     override fun visitLiteralExpr(literal: Literal) {
-        TODO("Not yet implemented")
+        // Nothing to do...
     }
 
     override fun visitVariable(variable: Variable) {
-        TODO("Not yet implemented")
+        if (scopes.isEmpty()) {
+            return
+        }
+
+        val isDefined = scopes.peek().getOrDefault(variable.name.lexeme, false)
+        if (!isDefined) {
+            Lox.error(variable.name, "Can't read local variable in its own initializer")
+        }
+
+        resolveLocal(variable, variable.name)
+    }
+
+    private fun resolveLocal(expr: Expr, name: Token) {
+        for (i in scopes.size - 1 downTo 0) {
+            val scope = scopes[i]
+            if (name.lexeme in scope) {
+                interpreter.resolve(expr, scopes.size - 1 - i)
+                return
+            }
+        }
     }
 
     override fun visitUnaryExpr(unary: Unary) {
-        TODO("Not yet implemented")
+        unary.right.accept(this)
     }
 
     override fun visitLogicalExpr(logical: Logical) {
-        TODO("Not yet implemented")
+        logical.left.accept(this)
+        logical.right.accept(this)
     }
 
     override fun visitCallExpr(call: Call) {
-        TODO("Not yet implemented")
+        call.callee.accept(this)
+        call.arguments.forEach { it.accept(this) }
     }
 
     override fun visitFunExpr(fn: FunExpr) {
-        TODO("Not yet implemented")
+        beginScope()
+        fn.parameters.forEach {
+            setVarDefDone(it,true)
+        }
+        fn.block.accept(this)
+        endScope()
     }
 
     override fun visitVarDeclStmt(varDeclStmt: VarDeclStmt) {
-        TODO("Not yet implemented")
+        val name = varDeclStmt.name.lexeme
+        setVarDefDone(name,false)
+        val initializer = varDeclStmt.initializer
+        if (initializer != null) {
+            if (initializer is FunExpr) {
+                // Functions might be recursive => the function name must be in scope while
+                // resolving the body
+                setVarDefDone(name, true)
+            }
+            varDeclStmt.initializer.accept(this)
+        }
+        if (initializer !is FunExpr) {
+            setVarDefDone(name, true)
+        }
     }
 
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
-        TODO("Not yet implemented")
+        expressionStmt.expression.accept(this)
     }
 
     override fun visitPrintStmt(printStmt: PrintStmt) {
-        TODO("Not yet implemented")
+        printStmt.expression.accept(this)
     }
 
     override fun visitBlockStmt(blockStmt: BlockStmt) {
@@ -61,36 +102,51 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitIfStmt(ifStmt: IfStmt) {
-        TODO("Not yet implemented")
+        ifStmt.condition.accept(this)
+        ifStmt.thenBranch.accept(this)
+        ifStmt.elseBranch?.accept(this)
     }
 
     override fun visitWhileStmt(whileStmt: WhileStmt) {
-        TODO("Not yet implemented")
+        whileStmt.condition.accept(this)
+        whileStmt.statement.accept(this)
     }
 
     override fun visitForStmt(forStmt: ForStmt) {
-        TODO("Not yet implemented")
+        beginScope()
+        forStmt.initializer?.accept(this)
+        forStmt.condition?.accept(this)
+        forStmt.increment?.accept(this)
+        forStmt.statement.accept(this)
+        endScope()
     }
 
     override fun visitBreakStmt(breakStmt: BreakStmt) {
-        TODO("Not yet implemented")
+        // Nothing to do...
     }
 
     override fun visitContinueStmt(continueStmt: ContinueStmt) {
-        TODO("Not yet implemented")
+        // Nothing to do...
     }
 
     override fun visitReturnStmt(returnStmt: ReturnStmt) {
-        TODO("Not yet implemented")
+        returnStmt.expr?.accept(this)
     }
 
     private fun beginScope() {
-        scopes.push(HashMap())
+        scopes.push(mutableMapOf())
     }
 
     private fun endScope() {
         scopes.pop()
     }
+
+    private fun setVarDefDone(name: String, done: Boolean) {
+        if (scopes.isEmpty()) {
+            return
+        }
+        scopes.peek()[name] = done
+    }
 }
 
-private typealias Scope = Map<String, Boolean>
+private typealias Scope = MutableMap<String, Boolean>
