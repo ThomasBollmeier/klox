@@ -13,7 +13,10 @@ class ReturnEvent(val value: Value) : RuntimeException()
 
 class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
-    var environment = Environment()
+    private val globals = Environment()
+    private val locals = mutableMapOf<Expr, Int>()
+    var environment = globals
+
     private val whileBodies = Stack<NonDeclStmt>()
 
     init {
@@ -21,6 +24,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     fun interpret(program: Program) {
+        program.accept(Resolver(this))
         program.accept(this)
     }
 
@@ -29,10 +33,6 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     fun newScope(): Environment {
         environment = Environment(environment)
         return environment
-    }
-
-    fun closeScope() {
-        environment = environment.enclosing!!
     }
 
     override fun visitBinaryExpr(binary: Binary): Value {
@@ -236,7 +236,26 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitVariable(variable: Variable): Value {
-        return environment.getValue(variable.name)
+        return getEnvironment(variable).getValue(variable.name)
+    }
+
+    private fun getEnvironment(expr: Expr): Environment {
+        val distance = locals[expr]
+        return if(distance != null) {
+            getEnvironmentAt(distance)
+        } else {
+            globals
+        }
+    }
+
+    private fun getEnvironmentAt(distance: Int): Environment {
+        var ret = environment
+        var i = distance
+        while (i > 0) {
+            ret = ret.enclosing!!
+            i--
+        }
+        return ret
     }
 
     override fun visitVarDeclStmt(varDeclStmt: VarDeclStmt) {
@@ -251,7 +270,8 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     override fun visitAssignExpr(assign: Assign): Value {
         val value = evaluate(assign.value)
-        environment.assign(assign.name, value)
+        val env = getEnvironment(assign)
+        env.assign(assign.name, value)
         return value
     }
 
@@ -296,8 +316,8 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         return Function(fn.parameters, fn.block, environment)
     }
 
-    fun resolve(expr: Expr, i: Int) {
-        TODO("Not yet implemented")
+    fun resolve(expr: Expr, distance: Int) {
+        locals[expr] = distance
     }
 
 }

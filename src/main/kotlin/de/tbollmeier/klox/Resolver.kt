@@ -29,8 +29,8 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
             return
         }
 
-        val isDefined = scopes.peek().getOrDefault(variable.name.lexeme, false)
-        if (!isDefined) {
+        val isDefined = scopes.peek()[variable.name.lexeme]
+        if (isDefined != null && !isDefined) {
             Lox.error(variable.name, "Can't read local variable in its own initializer")
         }
 

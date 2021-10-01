@@ -63,7 +63,7 @@ class InterpreterTest {
         testCode("""
             var a = 40;
             {
-                var a = a + 2;
+                var a = 42;
                 print a;
             }
             print a;
