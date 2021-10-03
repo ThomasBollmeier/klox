@@ -44,7 +44,7 @@ class AstPrinter : ExprVisitor<String> {
     }
 
     override fun visitFunExpr(fn: FunExpr): String {
-        val params = fn.parameters.joinToString(" ")
+        val params = fn.parameters.joinToString(" ") { it.lexeme }
         return "(fun ($params))"
     }
 }

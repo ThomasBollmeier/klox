@@ -64,7 +64,7 @@ class Call(val callee: Expr, val closingParen: Token, val arguments: List<Expr>)
     }
 }
 
-class FunExpr(val parameters: List<String>, val block: BlockStmt) : Expr() {
+class FunExpr(val parameters: List<Token>, val block: BlockStmt) : Expr() {
     override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
         return exprVisitor.visitFunExpr(this)
     }

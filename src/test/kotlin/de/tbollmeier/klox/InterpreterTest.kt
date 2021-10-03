@@ -3,8 +3,10 @@ package de.tbollmeier.klox
 import org.testng.annotations.Test
 
 import org.testng.Assert.*
+import org.testng.annotations.AfterSuite
+import org.testng.annotations.BeforeSuite
 
-class StringOut() : InterpreterOutput {
+class StringOut : InterpreterOutput {
 
     private var _output = ""
     val output
@@ -17,6 +19,16 @@ class StringOut() : InterpreterOutput {
 }
 
 class InterpreterTest {
+
+    @BeforeSuite
+    fun suiteSetup() {
+        Lox.loggingOn = false
+    }
+
+    @AfterSuite
+    fun suiteTeardown() {
+        Lox.loggingOn = true
+    }
 
     @Test
     fun `executes successfully`() {
@@ -306,7 +318,22 @@ class InterpreterTest {
 
     }
 
-    private fun testCode(code: String, expectedOutput: String? = null) {
+    @Test
+    fun `No return at top level`() {
+
+        testCode(code = """
+            return "at top level";
+        """.trimIndent(),
+        successExpected = false)
+
+    }
+
+    private fun testCode(
+        code: String,
+        expectedOutput: String? = null,
+        successExpected: Boolean = true)
+    {
+        Lox.reset()
         val program = parse(code)
         assertNotNull(program)
         val interpreter = Interpreter()
@@ -318,5 +345,9 @@ class InterpreterTest {
         } else {
             interpreter.interpret(program)
         }
+        if (successExpected)
+            assertTrue(Lox.isOk())
+        else
+            assertFalse(Lox.isOk())
     }
 }

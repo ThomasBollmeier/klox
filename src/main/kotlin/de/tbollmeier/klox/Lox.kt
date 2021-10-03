@@ -8,11 +8,11 @@ object Lox {
 
     private var hadError = false
     private var hadRuntimeError = false
-    private var loggingOn = true
+    var loggingOn = true
 
     private lateinit var interpreter: Interpreter
 
-    private fun reset() {
+    fun reset() {
         hadError = false
         hadRuntimeError = false
     }
@@ -89,6 +89,8 @@ object Lox {
             report(token.line, "at '${token.lexeme}'", message)
         }
     }
+
+    fun isOk() = !hadError && !hadRuntimeError
 
     private fun report(line: Int, where: String, message: String) {
         if (loggingOn) {

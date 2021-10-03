@@ -100,7 +100,7 @@ interface Callable {
 }
 
 class Function(
-    private val parameters: List<String>,
+    private val parameters: List<Token>,
     private val block: BlockStmt,
     private val closure: Environment
 ) : Value(), Callable {
@@ -115,7 +115,7 @@ class Function(
             interpreter.environment = Environment(closure)
             val env = interpreter.newScope()
             parameters.zip(arguments).forEach {
-                env.define(it.first, it.second)
+                env.define(it.first.lexeme, it.second)
             }
             return try {
                 block.accept(interpreter)
@@ -137,7 +137,7 @@ class Function(
     }
 
     override fun toString(): String {
-        val paramsStr = parameters.joinToString(", ")
+        val paramsStr = parameters.joinToString(", ") { it.lexeme }
         return "<fun ($paramsStr)>"
     }
 

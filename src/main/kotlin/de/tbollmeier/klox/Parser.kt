@@ -272,18 +272,18 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun functionExpr(kind: String): FunExpr {
-        val parameters = mutableListOf<String>()
+        val parameters = mutableListOf<Token>()
         consume(LEFT_PAREN, "Expected '(' after $kind name")
         if (!check(RIGHT_PAREN)) {
             var param = consume(IDENTIFIER, "Parameter must be an identifier.")
-            parameters.add(param.lexeme)
+            parameters.add(param)
             while (check(COMMA)) {
                 consume(COMMA, "Expected comma.")
                 param = consume(IDENTIFIER, "Parameter must be an identifier.")
                 if (parameters.size > maxNumArgs) {
                     error(previous(), "Can't have more that $maxNumArgs parameters.")
                 }
-                parameters.add(param.lexeme)
+                parameters.add(param)
             }
         }
         consume(RIGHT_PAREN, "Expected ')' after parameter list.")

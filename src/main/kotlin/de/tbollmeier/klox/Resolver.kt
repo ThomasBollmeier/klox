@@ -71,7 +71,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitVarDeclStmt(varDeclStmt: VarDeclStmt) {
-        val name = varDeclStmt.name.lexeme
+        val name = varDeclStmt.name
         setVarDefDone(name,false)
         val initializer = varDeclStmt.initializer
         if (initializer != null) {
@@ -141,11 +141,16 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         scopes.pop()
     }
 
-    private fun setVarDefDone(name: String, done: Boolean) {
+    private fun setVarDefDone(name: Token, done: Boolean) {
         if (scopes.isEmpty()) {
             return
         }
-        scopes.peek()[name] = done
+        val scope = scopes.peek()
+
+        if (!done && name.lexeme in scope) {
+            Lox.error(name, "Already a variable with this name in scope.")
+        }
+        scope[name.lexeme] = done
     }
 }
 
