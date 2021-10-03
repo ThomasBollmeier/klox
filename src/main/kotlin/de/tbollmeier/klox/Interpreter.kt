@@ -11,11 +11,22 @@ class ContinueEvent : RuntimeException()
 
 class ReturnEvent(val value: Value) : RuntimeException()
 
+interface InterpreterOutput {
+    fun writeln(text: String)
+}
+
+class StdOut() : InterpreterOutput {
+    override fun writeln(text: String) {
+        println(text)
+    }
+}
+
 class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     private val globals = Environment()
     private val locals = mutableMapOf<Expr, Int>()
     var environment = globals
+    var output: InterpreterOutput = StdOut()
 
     private val whileBodies = Stack<NonDeclStmt>()
 
@@ -142,7 +153,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     override fun visitPrintStmt(printStmt: PrintStmt) {
         val value = evaluate(printStmt.expression)
-        println("$value")
+        output.writeln("$value")
     }
 
     override fun visitBlockStmt(blockStmt: BlockStmt) {

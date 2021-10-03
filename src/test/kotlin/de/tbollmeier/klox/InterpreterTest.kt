@@ -4,6 +4,18 @@ import org.testng.annotations.Test
 
 import org.testng.Assert.*
 
+class StringOut() : InterpreterOutput {
+
+    private var _output = ""
+    val output
+        get() = _output
+
+    override fun writeln(text: String) {
+        _output += text + '\n'
+    }
+
+}
+
 class InterpreterTest {
 
     @Test
@@ -261,6 +273,11 @@ class InterpreterTest {
             
             thrice(fun (i) { print i; });
                         
+        """.trimIndent(), """
+            1
+            2
+            3
+            
         """.trimIndent())
 
     }
@@ -281,13 +298,25 @@ class InterpreterTest {
                 showA();
             }
                         
-        """.trimIndent())
+        """.trimIndent(), """
+            global
+            global
+            
+            """.trimIndent())
 
     }
 
-    private fun testCode(code: String) {
+    private fun testCode(code: String, expectedOutput: String? = null) {
         val program = parse(code)
         assertNotNull(program)
-        Interpreter().interpret(program)
+        val interpreter = Interpreter()
+        if (expectedOutput != null) {
+            val stringOut = StringOut()
+            interpreter.output = stringOut
+            interpreter.interpret(program)
+            assertEquals(stringOut.output, expectedOutput)
+        } else {
+            interpreter.interpret(program)
+        }
     }
 }
