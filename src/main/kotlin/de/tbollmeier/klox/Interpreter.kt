@@ -279,6 +279,13 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         environment.define(name, value)
     }
 
+    override fun visitClassStmt(classStmt: ClassStmt) {
+        val className = classStmt.name
+        environment.define(className.lexeme, Nil())
+        val cls = Class(className.lexeme)
+        environment.assign(className, cls)
+    }
+
     override fun visitAssignExpr(assign: Assign): Value {
         val value = evaluate(assign.value)
         val env = getEnvironment(assign)

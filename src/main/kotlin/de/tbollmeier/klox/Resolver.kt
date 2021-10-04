@@ -87,6 +87,10 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         }
     }
 
+    override fun visitClassStmt(classStmt: ClassStmt) {
+        setVarDefDone(classStmt.name, true)
+    }
+
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
         expressionStmt.expression.accept(this)
     }

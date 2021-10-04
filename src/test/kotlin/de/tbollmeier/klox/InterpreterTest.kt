@@ -328,14 +328,36 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `class declarations work`() {
+
+        testCode(
+            code = """
+                class DevonshireCream {
+                    serveOn() {
+                        return "Scones";
+                    }
+                }
+                
+                print DevonshireCream;
+            """.trimIndent(),
+        expectedOutput = """
+            <class DevonshireCream>
+            
+        """.trimIndent())
+
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,
         successExpected: Boolean = true)
     {
         Lox.reset()
+
         val program = parse(code)
         assertNotNull(program)
+
         val interpreter = Interpreter()
         if (expectedOutput != null) {
             val stringOut = StringOut()
@@ -345,9 +367,7 @@ class InterpreterTest {
         } else {
             interpreter.interpret(program)
         }
-        if (successExpected)
-            assertTrue(Lox.isOk())
-        else
-            assertFalse(Lox.isOk())
+
+        assertEquals(Lox.isOk(), successExpected)
     }
 }

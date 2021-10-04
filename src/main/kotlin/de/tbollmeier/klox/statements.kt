@@ -2,6 +2,7 @@ package de.tbollmeier.klox
 
 interface StmtVisitor {
     fun visitVarDeclStmt(varDeclStmt: VarDeclStmt)
+    fun visitClassStmt(classStmt: ClassStmt)
     fun visitExpressionStmt(expressionStmt: ExpressionStmt)
     fun visitPrintStmt(printStmt: PrintStmt)
     fun visitBlockStmt(blockStmt: BlockStmt)
@@ -33,6 +34,14 @@ class VarDeclStmt(val name: Token, val initializer: Expr?) : Stmt() {
         visitor.visitVarDeclStmt(this)
     }
 
+}
+
+typealias Method = Pair<Token, FunExpr>
+
+class ClassStmt(val name: Token, val methods: List<Method>) : Stmt() {
+    override fun accept(visitor: StmtVisitor) {
+        visitor.visitClassStmt(this)
+    }
 }
 
 abstract class NonDeclStmt : Stmt()

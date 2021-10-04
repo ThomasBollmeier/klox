@@ -143,3 +143,19 @@ class Function(
 
 }
 
+class Class(val name: String) : Value() {
+
+    override fun isEqual(other: Value): Bool {
+        return if (other is Class) {
+            Bool(this == other)
+        } else {
+            Bool(false)
+        }
+    }
+
+    override fun toString(): String {
+        return "<class $name>"
+    }
+
+}
+

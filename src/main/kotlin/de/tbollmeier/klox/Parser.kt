@@ -42,6 +42,7 @@ class Parser(private val tokens: List<Token>) {
     private fun statement(): Stmt? {
         return try {
             when {
+                match(CLASS) -> classStmt()
                 match(VAR) -> varDeclStmt()
                 else -> {
                     if (check(FUN)) {
@@ -60,6 +61,24 @@ class Parser(private val tokens: List<Token>) {
             synchronize()
             null
         }
+    }
+
+    // classStmt -> "class" IDENTIFIER "{" methods* "}"
+    private fun classStmt(): ClassStmt {
+        val className = consume(IDENTIFIER, "Expected class name.")
+        consume(LEFT_BRACE, "Expected '{' before class body")
+
+        val methods = mutableListOf<Method>()
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            val varDeclStmt = function("method")
+            val methodName = varDeclStmt.name
+            val funExpr = varDeclStmt.initializer as FunExpr
+            methods.add(Pair(methodName, funExpr))
+        }
+
+        consume(RIGHT_BRACE, "Expected '}' after class body.")
+
+        return ClassStmt(className, methods)
     }
 
     // function -> IDENTIFIER "(" (IDENTIFIER ("," IDENTIFIER)* )? ")" block
