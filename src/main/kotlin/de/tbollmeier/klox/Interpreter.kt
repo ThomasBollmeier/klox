@@ -334,6 +334,17 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         return Function(fn.parameters, fn.block, environment)
     }
 
+    override fun visitGet(get: Get): Value {
+        val instance = evaluate(get.obj)
+
+        return if (instance is Instance) {
+            instance.get(get.name)
+        } else {
+            throw InterpreterError(get.name, "Only instances have properties.")
+        }
+
+    }
+
     fun resolve(expr: Expr, distance: Int) {
         locals[expr] = distance
     }

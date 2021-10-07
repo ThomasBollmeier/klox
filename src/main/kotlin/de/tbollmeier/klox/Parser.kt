@@ -1,6 +1,7 @@
 package de.tbollmeier.klox
 
 import de.tbollmeier.klox.TokenType.*
+import org.yaml.snakeyaml.events.Event
 
 fun parse(code: String) = Parser(Scanner(code).scanTokens()).parse()
 
@@ -415,13 +416,16 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    // call -> primary ( "(" arguments? ")" )*
+    // call -> primary ( "(" arguments? ")" | "." IDENTIFIER )*
     private fun call(): Expr {
         var expr = primary()
 
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr)
+            } else if (match(DOT)) {
+                val name = consume(IDENTIFIER, "Expected property name after '.'.")
+                expr = Get(expr, name)
             } else {
                 break
             }

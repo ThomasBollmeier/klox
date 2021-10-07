@@ -47,4 +47,8 @@ class AstPrinter : ExprVisitor<String> {
         val params = fn.parameters.joinToString(" ") { it.lexeme }
         return "(fun ($params))"
     }
+
+    override fun visitGet(get: Get): String {
+        return "(get ${print(get.obj)} ${get.name.lexeme})"
+    }
 }

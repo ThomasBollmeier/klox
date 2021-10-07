@@ -348,6 +348,23 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `object instantiation work`() {
+
+        testCode(
+            code = """
+                class Bagel { }
+                var bagel = Bagel();
+                
+                print bagel;
+            """.trimIndent(),
+            expectedOutput = """
+            <instance Bagel>
+            
+        """.trimIndent())
+
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,

@@ -156,6 +156,10 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         }
         scope[name.lexeme] = done
     }
+
+    override fun visitGet(get: Get) {
+        get.obj.accept(this)
+    }
 }
 
 private typealias Scope = MutableMap<String, Boolean>

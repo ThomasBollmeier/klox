@@ -6,7 +6,7 @@ abstract class Value {
 
     open fun isTruthy() = true
 
-    abstract fun isEqual(other: Value): Bool
+    open fun isEqual(other: Value) = Bool(this == other)
 
     fun isNotEqual(other: Value) = Bool(!isEqual(other).isTruthy())
 
@@ -143,7 +143,7 @@ class Function(
 
 }
 
-class Class(val name: String) : Value() {
+class Class(val name: String) : Value(), Callable {
 
     override fun isEqual(other: Value): Bool {
         return if (other is Class) {
@@ -153,8 +153,32 @@ class Class(val name: String) : Value() {
         }
     }
 
+    override fun arity() = 0
+
+    override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
+        return Instance(this)
+    }
+
     override fun toString(): String {
         return "<class $name>"
+    }
+
+}
+
+class Instance(private val cls: Class) : Value() {
+
+    private val fields = mutableMapOf<String, Value>()
+
+    fun get(name: Token): Value {
+        return if (name.lexeme in fields) {
+            fields[name.lexeme]!!
+        } else {
+            throw InterpreterError(name, "Undefined property '${name.lexeme}.")
+        }
+    }
+
+    override fun toString(): String {
+        return "<instance ${cls.name}>"
     }
 
 }
