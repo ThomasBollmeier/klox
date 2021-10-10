@@ -43,6 +43,16 @@ class ParserTest {
 
     }
 
+    @Test
+    fun `setter and getter work`() {
+
+        testExpression(
+            expr = "person.name = \"Mustermann\"",
+            expectedAst = "(set (var person) name \"Mustermann\")"
+        )
+
+    }
+
     private fun testExpression(expr: String, expectedAst: String) {
 
         val source = "$expr;"

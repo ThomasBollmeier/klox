@@ -329,8 +329,10 @@ class Parser(private val tokens: List<Token>) {
             val equals = previous()
             when (expr) {
                 is Variable -> {
-                    val rhs = assignment()
-                    return Assign(expr.name, rhs)
+                    return Assign(expr.name, assignment())
+                }
+                is Get -> {
+                    return Set(expr.obj, expr.name, assignment())
                 }
                 else -> error(equals, "Invalid assignment target.")
             }

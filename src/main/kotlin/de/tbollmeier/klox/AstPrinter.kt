@@ -15,7 +15,15 @@ class AstPrinter : ExprVisitor<String> {
     }
 
     override fun visitLiteralExpr(literal: Literal): String {
-        return literal.value?.toString() ?: "nil"
+        return if (literal.value != null) {
+            if (literal.value is String) {
+                "\"${literal.value}\""
+            } else {
+                literal.value.toString()
+            }
+        } else {
+            "nil"
+        }
     }
 
     override fun visitUnaryExpr(unary: Unary): String {
@@ -50,5 +58,9 @@ class AstPrinter : ExprVisitor<String> {
 
     override fun visitGet(get: Get): String {
         return "(get ${print(get.obj)} ${get.name.lexeme})"
+    }
+
+    override fun visitSet(set: Set): String {
+        return "(set ${print(set.obj)} ${set.name.lexeme} ${print(set.value)})"
     }
 }

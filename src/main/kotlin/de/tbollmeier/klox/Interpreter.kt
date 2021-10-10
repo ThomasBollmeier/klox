@@ -342,7 +342,18 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         } else {
             throw InterpreterError(get.name, "Only instances have properties.")
         }
+    }
 
+    override fun visitSet(set: Set): Value {
+        val instance = evaluate(set.obj)
+        return if (instance is Instance) {
+            val value = evaluate(set.value)
+            instance.set(set.name, value)
+            value
+
+        } else {
+            throw InterpreterError(set.name, "Properties can only be set on instances.")
+        }
     }
 
     fun resolve(expr: Expr, distance: Int) {

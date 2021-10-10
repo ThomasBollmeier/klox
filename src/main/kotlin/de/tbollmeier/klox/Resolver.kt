@@ -160,6 +160,11 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     override fun visitGet(get: Get) {
         get.obj.accept(this)
     }
+
+    override fun visitSet(set: Set) {
+        set.obj.accept(this)
+        set.value.accept(this)
+    }
 }
 
 private typealias Scope = MutableMap<String, Boolean>

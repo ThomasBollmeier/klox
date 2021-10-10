@@ -177,6 +177,10 @@ class Instance(private val cls: Class) : Value() {
         }
     }
 
+    fun set(name: Token, value: Value) {
+        fields[name.lexeme] = value
+    }
+
     override fun toString(): String {
         return "<instance ${cls.name}>"
     }

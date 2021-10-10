@@ -365,6 +365,29 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun `setters and getters work`() {
+
+        val code = """
+            class Person {}
+            
+            var ego = Person();
+            ego.first_name = "Herbert";
+            ego.name = "Mustermann";
+            
+            print(ego.first_name);
+            print(ego.name);
+        """.trimIndent()
+
+        val expectedOutput = """
+            Herbert
+            Mustermann
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,
