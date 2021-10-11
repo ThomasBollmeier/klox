@@ -105,6 +105,12 @@ class Function(
     private val closure: Environment
 ) : Value(), Callable {
 
+    fun bind(instance: Instance): Function {
+        val newClosure = Environment(closure)
+        newClosure.define("this", instance)
+        return Function(parameters, block, newClosure)
+    }
+
     override fun arity(): Int {
         return parameters.size
     }
@@ -143,7 +149,11 @@ class Function(
 
 }
 
-class Class(val name: String) : Value(), Callable {
+class Class(val name: String, private val methods: Map<String, Function>) : Value(), Callable {
+
+    fun hasMethod(name: String) = name in methods
+
+    fun getMethod(name: String) = methods[name]
 
     override fun isEqual(other: Value): Bool {
         return if (other is Class) {
@@ -172,6 +182,9 @@ class Instance(private val cls: Class) : Value() {
     fun get(name: Token): Value {
         return if (name.lexeme in fields) {
             fields[name.lexeme]!!
+        } else if (cls.hasMethod(name.lexeme)) {
+            val method = cls.getMethod(name.lexeme)!!
+            method.bind(this)
         } else {
             throw InterpreterError(name, "Undefined property '${name.lexeme}.")
         }

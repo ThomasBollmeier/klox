@@ -450,7 +450,7 @@ class Parser(private val tokens: List<Token>) {
         return Call(callee, closingParen, arguments)
     }
 
-    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
+    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "this"
     private fun primary(): Expr {
         return when {
             match(NUMBER, STRING) -> Literal(previous().literal)
@@ -463,6 +463,7 @@ class Parser(private val tokens: List<Token>) {
                 Grouping(expr)
             }
             match(IDENTIFIER) -> Variable(previous())
+            match(THIS) -> This(previous())
             else -> throw error(peek(), "Expected expression.")
         }
     }

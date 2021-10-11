@@ -375,13 +375,62 @@ class InterpreterTest {
             ego.first_name = "Herbert";
             ego.name = "Mustermann";
             
-            print(ego.first_name);
-            print(ego.name);
+            print ego.first_name;
+            print ego.name;
         """.trimIndent()
 
         val expectedOutput = """
             Herbert
             Mustermann
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
+    @Test
+    fun `method calls work`() {
+
+        val code = """
+            class Bacon {
+                eat() {
+                    print "Crunch crunch crunch!";
+                }
+            }
+            
+            Bacon().eat();
+        """.trimIndent()
+
+        val expectedOutput = """
+            Crunch crunch crunch!
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
+    @Test
+    fun `this works`() {
+
+        val code = """
+            class Thing {
+                getCallback() {
+                    var answer = 42;
+                    fun localFunction() {
+                        print this;
+                        print answer;
+                    }
+                    return localFunction;
+                }
+            }
+            
+            var callback = Thing().getCallback();
+            callback();
+        """.trimIndent()
+
+        val expectedOutput = """
+            <instance Thing>
+            42
             
         """.trimIndent()
 

@@ -64,7 +64,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     override fun visitFunExpr(fn: FunExpr) {
         beginScope()
         fn.parameters.forEach {
-            setVarDefDone(it,true)
+            setVarDefDone(it, true)
         }
         fn.block.accept(this)
         endScope()
@@ -72,7 +72,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
 
     override fun visitVarDeclStmt(varDeclStmt: VarDeclStmt) {
         val name = varDeclStmt.name
-        setVarDefDone(name,false)
+        setVarDefDone(name, false)
         val initializer = varDeclStmt.initializer
         if (initializer != null) {
             if (initializer is FunExpr) {
@@ -89,6 +89,12 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
 
     override fun visitClassStmt(classStmt: ClassStmt) {
         setVarDefDone(classStmt.name, true)
+        beginScope()
+        scopes.peek()["this"] = true
+        classStmt.methods.forEach {
+            visitFunExpr(it.second)
+        }
+        endScope()
     }
 
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
@@ -137,6 +143,19 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         returnStmt.expr?.accept(this)
     }
 
+    override fun visitGet(get: Get) {
+        get.obj.accept(this)
+    }
+
+    override fun visitSet(set: Set) {
+        set.obj.accept(this)
+        set.value.accept(this)
+    }
+
+    override fun visitThis(self: This) {
+        resolveLocal(self, self.token)
+    }
+
     private fun beginScope() {
         scopes.push(mutableMapOf())
     }
@@ -157,14 +176,6 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         scope[name.lexeme] = done
     }
 
-    override fun visitGet(get: Get) {
-        get.obj.accept(this)
-    }
-
-    override fun visitSet(set: Set) {
-        set.obj.accept(this)
-        set.value.accept(this)
-    }
 }
 
 private typealias Scope = MutableMap<String, Boolean>

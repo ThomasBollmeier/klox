@@ -63,4 +63,8 @@ class AstPrinter : ExprVisitor<String> {
     override fun visitSet(set: Set): String {
         return "(set ${print(set.obj)} ${set.name.lexeme} ${print(set.value)})"
     }
+
+    override fun visitThis(self: This): String {
+        return "this"
+    }
 }

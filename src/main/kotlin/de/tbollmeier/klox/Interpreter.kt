@@ -282,7 +282,13 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     override fun visitClassStmt(classStmt: ClassStmt) {
         val className = classStmt.name
         environment.define(className.lexeme, Nil())
-        val cls = Class(className.lexeme)
+
+        val methods = mutableMapOf<String, Function>()
+        classStmt.methods.forEach {
+            methods[it.first.lexeme] = visitFunExpr(it.second)
+        }
+
+        val cls = Class(className.lexeme, methods)
         environment.assign(className, cls)
     }
 
@@ -330,7 +336,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         }
     }
 
-    override fun visitFunExpr(fn: FunExpr): Value {
+    override fun visitFunExpr(fn: FunExpr): Function {
         return Function(fn.parameters, fn.block, environment)
     }
 
@@ -354,6 +360,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         } else {
             throw InterpreterError(set.name, "Properties can only be set on instances.")
         }
+    }
+
+    override fun visitThis(self: This): Value {
+        return getEnvironment(self).getValue(self.token)
     }
 
     fun resolve(expr: Expr, distance: Int) {

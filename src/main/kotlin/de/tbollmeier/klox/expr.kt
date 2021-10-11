@@ -12,6 +12,7 @@ interface ExprVisitor<R> {
     fun visitFunExpr(fn: FunExpr): R
     fun visitGet(get: Get): R
     fun visitSet(set: Set): R
+    fun visitThis(self: This): R
 }
 
 sealed class Expr() {
@@ -81,5 +82,11 @@ class Get(val obj: Expr, val name: Token) : Expr() {
 class Set(val obj: Expr, val name: Token, val value: Expr) : Expr() {
     override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
         return exprVisitor.visitSet(this)
+    }
+}
+
+class This(val token: Token) : Expr() {
+    override fun <R> accept(exprVisitor: ExprVisitor<R>): R {
+        return exprVisitor.visitThis(this)
     }
 }
