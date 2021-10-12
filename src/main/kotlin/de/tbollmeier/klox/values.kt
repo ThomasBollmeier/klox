@@ -163,10 +163,22 @@ class Class(val name: String, private val methods: Map<String, Function>) : Valu
         }
     }
 
-    override fun arity() = 0
+    override fun arity(): Int {
+        return if (hasMethod("init")) {
+            getMethod("init")!!.arity()
+        } else {
+            0
+        }
+    }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
-        return Instance(this)
+        val instance = Instance(this)
+
+        if (hasMethod("init")) {
+            getMethod("init")?.bind(instance)?.call(interpreter, arguments)
+        }
+
+        return instance
     }
 
     override fun toString(): String {

@@ -5,6 +5,7 @@ import java.util.*
 class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVisitor {
 
     private val scopes = Stack<Scope>()
+    private var inClassContext = false
 
     override fun visitBinaryExpr(binary: Binary) {
         binary.left.accept(this)
@@ -88,6 +89,8 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitClassStmt(classStmt: ClassStmt) {
+        val prevInClass = inClassContext
+        inClassContext = true
         setVarDefDone(classStmt.name, true)
         beginScope()
         scopes.peek()["this"] = true
@@ -95,6 +98,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
             visitFunExpr(it.second)
         }
         endScope()
+        inClassContext = prevInClass
     }
 
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
@@ -153,7 +157,11 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitThis(self: This) {
-        resolveLocal(self, self.token)
+        if (inClassContext) {
+            resolveLocal(self, self.token)
+        } else {
+            Lox.error(self.token, "Can't use 'this' outside of a class.")
+        }
     }
 
     private fun beginScope() {

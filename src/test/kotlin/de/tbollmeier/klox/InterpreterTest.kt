@@ -426,11 +426,72 @@ class InterpreterTest {
             
             var callback = Thing().getCallback();
             callback();
+            
+            class Person
+            { 
+                fullName() 
+                {
+                    return this.firstName + " " + this.lastName;
+                }
+            }
+            
+            var ego = Person();
+            ego.firstName = "Thomas";
+            ego.lastName = "Bollmeier";
+            
+            print ego.fullName();
+            
         """.trimIndent()
 
         val expectedOutput = """
             <instance Thing>
             42
+            Thomas Bollmeier
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
+    @Test
+    fun `no this outside of methods`() {
+
+        val code = """
+            fun doSomething() {
+                print this;
+            }
+            
+        """.trimIndent()
+
+        testCode(code = code, successExpected = false)
+
+    }
+
+    @Test
+    fun `constructor works`() {
+
+        val code = """
+            class Person {
+                
+                init(firstName, lastName) {
+                    this.firstName = firstName;
+                    this.lastName = lastName;
+                }
+                
+                fullName() {
+                    return this.firstName + " " + this.lastName;
+                }
+                
+            }
+            
+            var ego = Person("Thomas", "Bollmeier");
+            
+            print ego.fullName();
+            
+        """.trimIndent()
+
+        val expectedOutput = """
+            Thomas Bollmeier
             
         """.trimIndent()
 
