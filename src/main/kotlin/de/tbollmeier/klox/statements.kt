@@ -125,7 +125,7 @@ class ContinueStmt: NonDeclStmt() {
     }
 }
 
-class ReturnStmt(val expr: Expr? = null): NonDeclStmt() {
+class ReturnStmt(val keyword: Token, val expr: Expr? = null): NonDeclStmt() {
     override fun accept(visitor: StmtVisitor) {
         visitor.visitReturnStmt(this)
     }

@@ -488,14 +488,51 @@ class InterpreterTest {
             
             print ego.fullName();
             
+            var alterEgo = ego.init("Tom", "Ballmiller");
+            
+            print alterEgo;
+            
         """.trimIndent()
 
         val expectedOutput = """
             Thomas Bollmeier
+            <instance Person>
             
         """.trimIndent()
 
         testCode(code, expectedOutput)
+    }
+
+    @Test
+    fun `no value return in constructor`() {
+
+        val code = """
+            class Test {
+                init() {
+                    return;
+                }
+            }
+            
+            print Test();
+        """.trimIndent()
+
+        val expectedOutput = """
+            <instance Test>
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+
+        val codeWithError = """
+            class Test {
+                init() {
+                    return "something";
+                }
+            }
+        """.trimIndent()
+
+        testCode(codeWithError, successExpected = false)
+
     }
 
     private fun testCode(

@@ -25,10 +25,11 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     private val globals = Environment()
     private val locals = mutableMapOf<Expr, Int>()
+    private val whileBodies = Stack<NonDeclStmt>()
+    private var isInitializer = false
+
     var environment = globals
     var output: InterpreterOutput = StdOut()
-
-    private val whileBodies = Stack<NonDeclStmt>()
 
     init {
         initBuiltinFunctions(environment)
@@ -285,7 +286,9 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
         val methods = mutableMapOf<String, Function>()
         classStmt.methods.forEach {
+            isInitializer = it.first.lexeme == "init"
             methods[it.first.lexeme] = visitFunExpr(it.second)
+            isInitializer = false
         }
 
         val cls = Class(className.lexeme, methods)
@@ -337,7 +340,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitFunExpr(fn: FunExpr): Function {
-        return Function(fn.parameters, fn.block, environment)
+        return Function(fn.parameters, fn.block, environment, isInitializer)
     }
 
     override fun visitGet(get: Get): Value {

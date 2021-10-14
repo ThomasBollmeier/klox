@@ -6,6 +6,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
 
     private val scopes = Stack<Scope>()
     private var inClassContext = false
+    private var isInitializer = false
 
     override fun visitBinaryExpr(binary: Binary) {
         binary.left.accept(this)
@@ -95,7 +96,9 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         beginScope()
         scopes.peek()["this"] = true
         classStmt.methods.forEach {
+            isInitializer = it.first.lexeme == "init"
             visitFunExpr(it.second)
+            isInitializer = false
         }
         endScope()
         inClassContext = prevInClass
@@ -144,6 +147,9 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitReturnStmt(returnStmt: ReturnStmt) {
+        if (isInitializer && returnStmt.expr != null) {
+            Lox.error(returnStmt.keyword, "Can't return a value from an initializer.")
+        }
         returnStmt.expr?.accept(this)
     }
 

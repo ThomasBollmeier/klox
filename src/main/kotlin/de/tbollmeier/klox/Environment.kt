@@ -8,9 +8,12 @@ class Environment(val enclosing: Environment? = null) {
         values[name] = value
     }
 
-    fun getValue(name: Token): Value {
-        return values[name.lexeme] ?: (enclosing?.getValue(name)
-            ?: throw InterpreterError(name, "Undefined variable '${name.lexeme}'."))
+    fun getValue(name: Token) =
+        getValue(name.lexeme) ?:
+            throw InterpreterError(name, "Undefined variable '${name}'.")
+
+    fun getValue(name: String): Value? {
+        return values[name] ?: (enclosing?.getValue(name))
     }
 
     fun assign(name: Token, value: Value) {

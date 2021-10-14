@@ -279,7 +279,7 @@ class Parser(private val tokens: List<Token>) {
                 null
             }
             consume(SEMICOLON, "Expected ';' at end of return statement.")
-            ReturnStmt(expr)
+            ReturnStmt(returnToken, expr)
         } else {
             throw error(returnToken, "'return' must only be used within functions.")
         }

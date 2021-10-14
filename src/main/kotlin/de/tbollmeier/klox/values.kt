@@ -102,13 +102,16 @@ interface Callable {
 class Function(
     private val parameters: List<Token>,
     private val block: BlockStmt,
-    private val closure: Environment
+    private val closure: Environment,
+    private val isInitializer: Boolean = false
 ) : Value(), Callable {
+
+    private val instanceRefName = "this"
 
     fun bind(instance: Instance): Function {
         val newClosure = Environment(closure)
-        newClosure.define("this", instance)
-        return Function(parameters, block, newClosure)
+        newClosure.define(instanceRefName, instance)
+        return Function(parameters, block, newClosure, isInitializer)
     }
 
     override fun arity(): Int {
@@ -125,9 +128,17 @@ class Function(
             }
             return try {
                 block.accept(interpreter)
-                Nil()
+                if (!isInitializer) {
+                    Nil()
+                } else {
+                    closure.getValue(instanceRefName) ?: Nil()
+                }
             } catch (ret: ReturnEvent) {
-                ret.value
+                if (!isInitializer) {
+                    ret.value
+                } else {
+                    closure.getValue(instanceRefName) ?: Nil()
+                }
             }
         } finally {
             interpreter.environment = oldEnv
