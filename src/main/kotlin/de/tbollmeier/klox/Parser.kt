@@ -71,10 +71,11 @@ class Parser(private val tokens: List<Token>) {
 
         val methods = mutableListOf<Method>()
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            val isClassMethod = match(CLASS)
             val varDeclStmt = function("method")
             val methodName = varDeclStmt.name
             val funExpr = varDeclStmt.initializer as FunExpr
-            methods.add(Pair(methodName, funExpr))
+            methods.add(Method(methodName, funExpr, isClassMethod))
         }
 
         consume(RIGHT_BRACE, "Expected '}' after class body.")

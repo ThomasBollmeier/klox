@@ -5,7 +5,7 @@ import java.util.*
 class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVisitor {
 
     private val scopes = Stack<Scope>()
-    private var inClassContext = false
+    private var inInstanceContext = false
     private var isInitializer = false
 
     override fun visitBinaryExpr(binary: Binary) {
@@ -90,18 +90,20 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitClassStmt(classStmt: ClassStmt) {
-        val prevInClass = inClassContext
-        inClassContext = true
+        val prevInClass = inInstanceContext
         setVarDefDone(classStmt.name, true)
         beginScope()
         scopes.peek()["this"] = true
         classStmt.methods.forEach {
-            isInitializer = it.first.lexeme == "init"
-            visitFunExpr(it.second)
+            val (name, funExpr, isClassMethod) = it
+            inInstanceContext = !isClassMethod
+            isInitializer = (name.lexeme == "init") && !isClassMethod
+            visitFunExpr(funExpr)
+            inInstanceContext = false
             isInitializer = false
         }
         endScope()
-        inClassContext = prevInClass
+        inInstanceContext = prevInClass
     }
 
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
@@ -163,7 +165,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitThis(self: This) {
-        if (inClassContext) {
+        if (inInstanceContext) {
             resolveLocal(self, self.token)
         } else {
             Lox.error(self.token, "Can't use 'this' outside of a class.")

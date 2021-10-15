@@ -36,7 +36,7 @@ class VarDeclStmt(val name: Token, val initializer: Expr?) : Stmt() {
 
 }
 
-typealias Method = Pair<Token, FunExpr>
+data class Method(val name: Token, val funExpr: FunExpr, val isClassMethod: Boolean)
 
 class ClassStmt(val name: Token, val methods: List<Method>) : Stmt() {
     override fun accept(visitor: StmtVisitor) {

@@ -37,7 +37,9 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
 
     fun interpret(program: Program) {
         program.accept(Resolver(this))
-        program.accept(this)
+        if (Lox.isOk()) {
+            program.accept(this)
+        }
     }
 
     fun evaluate(expression: Expr) = expression.accept(this)
@@ -284,10 +286,11 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         val className = classStmt.name
         environment.define(className.lexeme, Nil())
 
-        val methods = mutableMapOf<String, Function>()
+        val methods = mutableMapOf<String, Pair<Function, Boolean>>()
         classStmt.methods.forEach {
-            isInitializer = it.first.lexeme == "init"
-            methods[it.first.lexeme] = visitFunExpr(it.second)
+            val(name, funExpr, isClassMethod) = it
+            isInitializer = (name.lexeme == "init") && !isClassMethod
+            methods[name.lexeme] = Pair(visitFunExpr(funExpr), isClassMethod)
             isInitializer = false
         }
 
@@ -344,12 +347,12 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitGet(get: Get): Value {
-        val instance = evaluate(get.obj)
 
-        return if (instance is Instance) {
-            instance.get(get.name)
-        } else {
-            throw InterpreterError(get.name, "Only instances have properties.")
+        return when (val target = evaluate(get.obj)) {
+            is Instance -> target.get(get.name)
+            is Class -> target.getClassMethod(get.name.lexeme) ?:
+                throw InterpreterError(get.name, "Undefined class method '${get.name.lexeme}'.")
+            else -> throw InterpreterError(get.name, "Only classes and instances have properties.")
         }
     }
 
@@ -359,7 +362,6 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
             val value = evaluate(set.value)
             instance.set(set.name, value)
             value
-
         } else {
             throw InterpreterError(set.name, "Properties can only be set on instances.")
         }

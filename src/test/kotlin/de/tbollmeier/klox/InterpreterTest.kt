@@ -491,12 +491,14 @@ class InterpreterTest {
             var alterEgo = ego.init("Tom", "Ballmiller");
             
             print alterEgo;
+            print ego.lastName;
             
         """.trimIndent()
 
         val expectedOutput = """
             Thomas Bollmeier
             <instance Person>
+            Ballmiller
             
         """.trimIndent()
 
@@ -533,6 +535,26 @@ class InterpreterTest {
 
         testCode(codeWithError, successExpected = false)
 
+    }
+
+    @Test
+    fun `class methods work`() {
+        val code = """
+            class Math {
+                class square(n) {
+                    return n * n;
+                }
+            }
+            
+            print Math.square(3);
+        """.trimIndent()
+
+        val expectedOutput = """
+            9
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
     }
 
     private fun testCode(

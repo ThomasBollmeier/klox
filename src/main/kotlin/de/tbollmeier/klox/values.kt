@@ -160,11 +160,37 @@ class Function(
 
 }
 
-class Class(val name: String, private val methods: Map<String, Function>) : Value(), Callable {
+class Class(val name: String, private val methods: Map<String, Pair<Function, Boolean>>) : Value(), Callable {
 
-    fun hasMethod(name: String) = name in methods
+    fun hasInstanceMethod(name: String) = methods[name]?.second?.not() ?: false
 
-    fun getMethod(name: String) = methods[name]
+    fun getInstanceMethod(name: String): Function? {
+        val entry = methods[name]
+        return if (entry != null) {
+            val (method, isClassMethod) = entry
+            if (!isClassMethod) {
+                method
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    fun getClassMethod(name: String): Function? {
+        val entry = methods[name]
+        return if (entry != null) {
+            val (method, isClassMethod) = entry
+            if (isClassMethod) {
+                method
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+    }
 
     override fun isEqual(other: Value): Bool {
         return if (other is Class) {
@@ -175,8 +201,8 @@ class Class(val name: String, private val methods: Map<String, Function>) : Valu
     }
 
     override fun arity(): Int {
-        return if (hasMethod("init")) {
-            getMethod("init")!!.arity()
+        return if (hasInstanceMethod("init")) {
+            getInstanceMethod("init")!!.arity()
         } else {
             0
         }
@@ -185,8 +211,8 @@ class Class(val name: String, private val methods: Map<String, Function>) : Valu
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
         val instance = Instance(this)
 
-        if (hasMethod("init")) {
-            getMethod("init")?.bind(instance)?.call(interpreter, arguments)
+        if (hasInstanceMethod("init")) {
+            getInstanceMethod("init")?.bind(instance)?.call(interpreter, arguments)
         }
 
         return instance
@@ -205,8 +231,8 @@ class Instance(private val cls: Class) : Value() {
     fun get(name: Token): Value {
         return if (name.lexeme in fields) {
             fields[name.lexeme]!!
-        } else if (cls.hasMethod(name.lexeme)) {
-            val method = cls.getMethod(name.lexeme)!!
+        } else if (cls.hasInstanceMethod(name.lexeme)) {
+            val method = cls.getInstanceMethod(name.lexeme)!!
             method.bind(this)
         } else {
             throw InterpreterError(name, "Undefined property '${name.lexeme}.")
