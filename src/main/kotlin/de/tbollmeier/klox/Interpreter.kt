@@ -286,11 +286,11 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         val className = classStmt.name
         environment.define(className.lexeme, Nil())
 
-        val methods = mutableMapOf<String, Pair<Function, Boolean>>()
+        val methods = mutableMapOf<String, Pair<Function, MethodCategory>>()
         classStmt.methods.forEach {
-            val(name, funExpr, isClassMethod) = it
-            isInitializer = (name.lexeme == "init") && !isClassMethod
-            methods[name.lexeme] = Pair(visitFunExpr(funExpr), isClassMethod)
+            val(name, funExpr, category) = it
+            isInitializer = (name.lexeme == "init") && (category == MethodCategory.INSTANCE_METHOD)
+            methods[name.lexeme] = Pair(visitFunExpr(funExpr), category)
             isInitializer = false
         }
 
@@ -349,7 +349,12 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     override fun visitGet(get: Get): Value {
 
         return when (val target = evaluate(get.obj)) {
-            is Instance -> target.get(get.name)
+            is Instance -> {
+                when (val property = target.get(get.name)) {
+                    is Getter -> property.call(this, emptyList())
+                    else -> property
+                }
+            }
             is Class -> target.getClassMethod(get.name.lexeme) ?:
                 throw InterpreterError(get.name, "Undefined class method '${get.name.lexeme}'.")
             else -> throw InterpreterError(get.name, "Only classes and instances have properties.")

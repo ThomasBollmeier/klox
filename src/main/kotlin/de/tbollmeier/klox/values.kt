@@ -160,29 +160,19 @@ class Function(
 
 }
 
-class Class(val name: String, private val methods: Map<String, Pair<Function, Boolean>>) : Value(), Callable {
+class Class(val name: String, private val methods: Map<String, Pair<Function, MethodCategory>>) : Value(), Callable {
 
-    fun hasInstanceMethod(name: String) = methods[name]?.second?.not() ?: false
+    fun getClassMethod(name: String) = getMethod(name, MethodCategory.CLASS_METHOD)
 
-    fun getInstanceMethod(name: String): Function? {
+    fun getInstanceMethod(name: String) = getMethod(name, MethodCategory.INSTANCE_METHOD)
+
+    fun getGetterMethod(name: String) = getMethod(name, MethodCategory.GETTER)
+
+    private fun getMethod(name: String, category: MethodCategory): Function? {
         val entry = methods[name]
         return if (entry != null) {
-            val (method, isClassMethod) = entry
-            if (!isClassMethod) {
-                method
-            } else {
-                null
-            }
-        } else {
-            null
-        }
-    }
-
-    fun getClassMethod(name: String): Function? {
-        val entry = methods[name]
-        return if (entry != null) {
-            val (method, isClassMethod) = entry
-            if (isClassMethod) {
+            val (method, catg) = entry
+            if (catg == category) {
                 method
             } else {
                 null
@@ -201,20 +191,13 @@ class Class(val name: String, private val methods: Map<String, Pair<Function, Bo
     }
 
     override fun arity(): Int {
-        return if (hasInstanceMethod("init")) {
-            getInstanceMethod("init")!!.arity()
-        } else {
-            0
-        }
+        val initializer = getInstanceMethod("init")
+        return initializer?.arity() ?: 0
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
         val instance = Instance(this)
-
-        if (hasInstanceMethod("init")) {
-            getInstanceMethod("init")?.bind(instance)?.call(interpreter, arguments)
-        }
-
+        getInstanceMethod("init")?.bind(instance)?.call(interpreter, arguments)
         return instance
     }
 
@@ -231,11 +214,18 @@ class Instance(private val cls: Class) : Value() {
     fun get(name: Token): Value {
         return if (name.lexeme in fields) {
             fields[name.lexeme]!!
-        } else if (cls.hasInstanceMethod(name.lexeme)) {
-            val method = cls.getInstanceMethod(name.lexeme)!!
-            method.bind(this)
         } else {
-            throw InterpreterError(name, "Undefined property '${name.lexeme}.")
+            val method = cls.getInstanceMethod(name.lexeme)
+            if (method != null) {
+                method.bind(this)
+            } else {
+                val accessMethod = cls.getGetterMethod(name.lexeme)?.bind(this)
+                if (accessMethod != null) {
+                    Getter(accessMethod)
+                } else {
+                    throw InterpreterError(name, "Undefined property '${name.lexeme}.")
+                }
+            }
         }
     }
 
@@ -248,4 +238,6 @@ class Instance(private val cls: Class) : Value() {
     }
 
 }
+
+class Getter(private val accessFn: Function): Value(), Callable by accessFn
 

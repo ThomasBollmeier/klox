@@ -1,7 +1,6 @@
 package de.tbollmeier.klox
 
 import de.tbollmeier.klox.TokenType.*
-import org.yaml.snakeyaml.events.Event
 
 fun parse(code: String) = Parser(Scanner(code).scanTokens()).parse()
 
@@ -72,10 +71,16 @@ class Parser(private val tokens: List<Token>) {
         val methods = mutableListOf<Method>()
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             val isClassMethod = match(CLASS)
-            val varDeclStmt = function("method")
+            val isGetter = !isClassMethod && peekNext()?.tokenType == LEFT_BRACE
+            val varDeclStmt = function("method", isGetter)
             val methodName = varDeclStmt.name
             val funExpr = varDeclStmt.initializer as FunExpr
-            methods.add(Method(methodName, funExpr, isClassMethod))
+            val category = when  {
+                isClassMethod -> MethodCategory.CLASS_METHOD
+                isGetter -> MethodCategory.GETTER
+                else -> MethodCategory.INSTANCE_METHOD
+            }
+            methods.add(Method(methodName, funExpr, category))
         }
 
         consume(RIGHT_BRACE, "Expected '}' after class body.")
@@ -84,9 +89,9 @@ class Parser(private val tokens: List<Token>) {
     }
 
     // function -> IDENTIFIER "(" (IDENTIFIER ("," IDENTIFIER)* )? ")" block
-    private fun function(kind: String): VarDeclStmt {
+    private fun function(kind: String, withoutParams: Boolean = false): VarDeclStmt {
         val name = consume(IDENTIFIER, "Expected identifier as $kind name.")
-        val funExpr = functionExpr(kind)
+        val funExpr = functionExpr(kind, withoutParams)
         
         return VarDeclStmt(name, funExpr)
     }
@@ -292,22 +297,25 @@ class Parser(private val tokens: List<Token>) {
         else -> assignment()
     }
 
-    private fun functionExpr(kind: String): FunExpr {
+    private fun functionExpr(kind: String, withoutParams: Boolean = false): FunExpr {
         val parameters = mutableListOf<Token>()
-        consume(LEFT_PAREN, "Expected '(' after $kind name")
-        if (!check(RIGHT_PAREN)) {
-            var param = consume(IDENTIFIER, "Parameter must be an identifier.")
-            parameters.add(param)
-            while (check(COMMA)) {
-                consume(COMMA, "Expected comma.")
-                param = consume(IDENTIFIER, "Parameter must be an identifier.")
-                if (parameters.size > maxNumArgs) {
-                    error(previous(), "Can't have more that $maxNumArgs parameters.")
-                }
+
+        if (!withoutParams) {
+            consume(LEFT_PAREN, "Expected '(' after $kind name")
+            if (!check(RIGHT_PAREN)) {
+                var param = consume(IDENTIFIER, "Parameter must be an identifier.")
                 parameters.add(param)
+                while (check(COMMA)) {
+                    consume(COMMA, "Expected comma.")
+                    param = consume(IDENTIFIER, "Parameter must be an identifier.")
+                    if (parameters.size > maxNumArgs) {
+                        error(previous(), "Can't have more that $maxNumArgs parameters.")
+                    }
+                    parameters.add(param)
+                }
             }
+            consume(RIGHT_PAREN, "Expected ')' after parameter list.")
         }
-        consume(RIGHT_PAREN, "Expected ')' after parameter list.")
 
         consume(LEFT_BRACE, "Expected function block to start with '{'.")
 
@@ -424,11 +432,11 @@ class Parser(private val tokens: List<Token>) {
         var expr = primary()
 
         while (true) {
-            if (match(LEFT_PAREN)) {
-                expr = finishCall(expr)
+            expr = if (match(LEFT_PAREN)) {
+                finishCall(expr)
             } else if (match(DOT)) {
                 val name = consume(IDENTIFIER, "Expected property name after '.'.")
-                expr = Get(expr, name)
+                Get(expr, name)
             } else {
                 break
             }

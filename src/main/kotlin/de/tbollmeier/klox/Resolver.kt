@@ -95,9 +95,9 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
         beginScope()
         scopes.peek()["this"] = true
         classStmt.methods.forEach {
-            val (name, funExpr, isClassMethod) = it
-            inInstanceContext = !isClassMethod
-            isInitializer = (name.lexeme == "init") && !isClassMethod
+            val (name, funExpr, category) = it
+            inInstanceContext = category != MethodCategory.CLASS_METHOD
+            isInitializer = name.lexeme == "init" && category == MethodCategory.INSTANCE_METHOD
             visitFunExpr(funExpr)
             inInstanceContext = false
             isInitializer = false

@@ -36,7 +36,13 @@ class VarDeclStmt(val name: Token, val initializer: Expr?) : Stmt() {
 
 }
 
-data class Method(val name: Token, val funExpr: FunExpr, val isClassMethod: Boolean)
+enum class MethodCategory {
+    CLASS_METHOD,
+    INSTANCE_METHOD,
+    GETTER
+}
+
+data class Method(val name: Token, val funExpr: FunExpr, val category: MethodCategory)
 
 class ClassStmt(val name: Token, val methods: List<Method>) : Stmt() {
     override fun accept(visitor: StmtVisitor) {

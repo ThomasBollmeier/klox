@@ -557,6 +557,32 @@ class InterpreterTest {
         testCode(code, expectedOutput)
     }
 
+    @Test
+    fun `getters work`() {
+        val code = """
+            class Circle {
+                
+                init(radius) {
+                    this.radius = radius;
+                }
+                
+                area {
+                    return 3.1415 * this.radius * this.radius;
+                }
+                                
+            }
+            
+            print Circle(4).area;
+        """.trimIndent()
+
+        val expectedOutput = """
+            50.264
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,
