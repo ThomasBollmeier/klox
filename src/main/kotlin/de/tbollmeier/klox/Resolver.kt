@@ -92,6 +92,12 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     override fun visitClassStmt(classStmt: ClassStmt) {
         val prevInClass = inInstanceContext
         setVarDefDone(classStmt.name, true)
+        if (classStmt.superClass != null) {
+            if (classStmt.superClass.name.lexeme == classStmt.name.lexeme) {
+                Lox.error(classStmt.superClass.name, "A class can't inherit from itself.")
+            }
+            classStmt.superClass.accept(this)
+        }
         beginScope()
         scopes.peek()["this"] = true
         classStmt.methods.forEach {

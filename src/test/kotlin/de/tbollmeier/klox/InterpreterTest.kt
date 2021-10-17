@@ -583,6 +583,29 @@ class InterpreterTest {
         testCode(code, expectedOutput)
     }
 
+    @Test
+    fun `inheritance works`() {
+
+        val code = """
+            class Doughnut {
+                cook() {
+                    print "Fry until golden brown.";
+                }
+            }
+            
+            class BostonCream < Doughnut { }
+            
+            BostonCream().cook();
+        """.trimIndent()
+
+        val expectedOutput = """
+            Fry until golden brown.
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,

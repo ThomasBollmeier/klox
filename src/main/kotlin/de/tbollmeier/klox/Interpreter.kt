@@ -283,6 +283,17 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
     }
 
     override fun visitClassStmt(classStmt: ClassStmt) {
+        val superClass = if (classStmt.superClass != null) {
+            val value = evaluate(classStmt.superClass)
+            if (value !is Class) {
+                throw InterpreterError(classStmt.superClass.name,
+                    "Superclass must be a class")
+            }
+            value
+        } else {
+            null
+        }
+
         val className = classStmt.name
         environment.define(className.lexeme, Nil())
 
@@ -294,7 +305,7 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
             isInitializer = false
         }
 
-        val cls = Class(className.lexeme, methods)
+        val cls = Class(className.lexeme, superClass, methods)
         environment.assign(className, cls)
     }
 

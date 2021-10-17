@@ -66,6 +66,14 @@ class Parser(private val tokens: List<Token>) {
     // classStmt -> "class" IDENTIFIER "{" methods* "}"
     private fun classStmt(): ClassStmt {
         val className = consume(IDENTIFIER, "Expected class name.")
+
+        val superClass = if (match(LESS)) {
+            consume(IDENTIFIER, "Name of super class expected.")
+            Variable(previous())
+        } else {
+            null
+        }
+
         consume(LEFT_BRACE, "Expected '{' before class body")
 
         val methods = mutableListOf<Method>()
@@ -85,7 +93,7 @@ class Parser(private val tokens: List<Token>) {
 
         consume(RIGHT_BRACE, "Expected '}' after class body.")
 
-        return ClassStmt(className, methods)
+        return ClassStmt(className, superClass, methods)
     }
 
     // function -> IDENTIFIER "(" (IDENTIFIER ("," IDENTIFIER)* )? ")" block

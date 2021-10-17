@@ -160,7 +160,11 @@ class Function(
 
 }
 
-class Class(val name: String, private val methods: Map<String, Pair<Function, MethodCategory>>) : Value(), Callable {
+class Class(
+    val name: String,
+    private val superClass: Class?,
+    private val methods: Map<String, Pair<Function, MethodCategory>>
+    ) : Value(), Callable {
 
     fun getClassMethod(name: String) = getMethod(name, MethodCategory.CLASS_METHOD)
 
@@ -177,9 +181,7 @@ class Class(val name: String, private val methods: Map<String, Pair<Function, Me
             } else {
                 null
             }
-        } else {
-            null
-        }
+        } else superClass?.getMethod(name, category)
     }
 
     override fun isEqual(other: Value): Bool {
