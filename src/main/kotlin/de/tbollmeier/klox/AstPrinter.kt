@@ -67,4 +67,8 @@ class AstPrinter : ExprVisitor<String> {
     override fun visitThis(self: This): String {
         return "this"
     }
+
+    override fun visitSuper(self: Super): String {
+        return "super"
+    }
 }

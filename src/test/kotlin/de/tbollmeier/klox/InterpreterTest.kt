@@ -593,13 +593,19 @@ class InterpreterTest {
                 }
             }
             
-            class BostonCream < Doughnut { }
+            class BostonCream < Doughnut { 
+                cook() {
+                    super.cook();
+                    print "Pipe full of custard and coat with chocolate.";
+                }
+            }
             
             BostonCream().cook();
         """.trimIndent()
 
         val expectedOutput = """
             Fry until golden brown.
+            Pipe full of custard and coat with chocolate.
             
         """.trimIndent()
 

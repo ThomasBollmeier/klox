@@ -5,6 +5,7 @@ import java.util.*
 class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVisitor {
 
     private val scopes = Stack<Scope>()
+    private var isDerived = false
     private var inInstanceContext = false
     private var isInitializer = false
 
@@ -90,7 +91,7 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
     }
 
     override fun visitClassStmt(classStmt: ClassStmt) {
-        val prevInClass = inInstanceContext
+        val prevInInstance = inInstanceContext
         setVarDefDone(classStmt.name, true)
         if (classStmt.superClass != null) {
             if (classStmt.superClass.name.lexeme == classStmt.name.lexeme) {
@@ -98,8 +99,12 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
             }
             classStmt.superClass.accept(this)
         }
+        isDerived = classStmt.superClass != null
         beginScope()
         scopes.peek()["this"] = true
+        if (isDerived) {
+            scopes.peek()["super"] = true
+        }
         classStmt.methods.forEach {
             val (name, funExpr, category) = it
             inInstanceContext = category != MethodCategory.CLASS_METHOD
@@ -109,7 +114,8 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
             isInitializer = false
         }
         endScope()
-        inInstanceContext = prevInClass
+        isDerived = false
+        inInstanceContext = prevInInstance
     }
 
     override fun visitExpressionStmt(expressionStmt: ExpressionStmt) {
@@ -175,6 +181,14 @@ class Resolver(private val interpreter: Interpreter) : ExprVisitor<Unit>, StmtVi
             resolveLocal(self, self.token)
         } else {
             Lox.error(self.token, "Can't use 'this' outside of a class.")
+        }
+    }
+
+    override fun visitSuper(self: Super) {
+        if (inInstanceContext && isDerived) {
+            resolveLocal(self, self.token)
+        } else {
+            Lox.error(self.token, "'super' can only be used in the context of sub classes.")
         }
     }
 

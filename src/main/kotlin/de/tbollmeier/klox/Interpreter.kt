@@ -387,6 +387,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
         return getEnvironment(self).getValue(self.token)
     }
 
+    override fun visitSuper(self: Super): Value {
+        return getEnvironment(self).getValue(self.token)
+    }
+
     fun resolve(expr: Expr, distance: Int) {
         locals[expr] = distance
     }

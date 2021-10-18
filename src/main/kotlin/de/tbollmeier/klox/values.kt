@@ -107,10 +107,14 @@ class Function(
 ) : Value(), Callable {
 
     private val instanceRefName = "this"
+    private val superInstanceRefName = "super"
 
     fun bind(instance: Instance): Function {
         val newClosure = Environment(closure)
         newClosure.define(instanceRefName, instance)
+        if (instance.cls.superClass != null) {
+            newClosure.define(superInstanceRefName, instance.superInstance())
+        }
         return Function(parameters, block, newClosure, isInitializer)
     }
 
@@ -162,7 +166,7 @@ class Function(
 
 class Class(
     val name: String,
-    private val superClass: Class?,
+    val superClass: Class?,
     private val methods: Map<String, Pair<Function, MethodCategory>>
     ) : Value(), Callable {
 
@@ -209,9 +213,21 @@ class Class(
 
 }
 
-class Instance(private val cls: Class) : Value() {
+class Instance(val cls: Class) : Value() {
 
     private val fields = mutableMapOf<String, Value>()
+
+    fun superInstance(): Value {
+        return if (cls.superClass != null) {
+            val ret = Instance(cls.superClass)
+            for ((key, value) in fields) {
+                ret.fields[key] = value
+            }
+            ret
+        } else {
+            Nil()
+        }
+    }
 
     fun get(name: Token): Value {
         return if (name.lexeme in fields) {
