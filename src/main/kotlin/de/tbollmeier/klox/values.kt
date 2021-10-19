@@ -109,11 +109,11 @@ class Function(
     private val instanceRefName = "this"
     private val superInstanceRefName = "super"
 
-    fun bind(instance: Instance): Function {
+    fun bind(instance: Instance, superClass: Class?): Function {
         val newClosure = Environment(closure)
         newClosure.define(instanceRefName, instance)
-        if (instance.cls.superClass != null) {
-            newClosure.define(superInstanceRefName, instance.superInstance())
+        if (superClass != null) {
+            newClosure.define(superInstanceRefName, instance.superInstance(superClass))
         }
         return Function(parameters, block, newClosure, isInitializer)
     }
@@ -176,16 +176,16 @@ class Class(
 
     fun getGetterMethod(name: String) = getMethod(name, MethodCategory.GETTER)
 
-    private fun getMethod(name: String, category: MethodCategory): Function? {
+    private fun getMethod(name: String, category: MethodCategory): Pair<Function?, Class?> {
         val entry = methods[name]
         return if (entry != null) {
             val (method, catg) = entry
             if (catg == category) {
-                method
+                Pair(method, this)
             } else {
-                null
+                Pair(null, null)
             }
-        } else superClass?.getMethod(name, category)
+        } else superClass?.getMethod(name, category) ?: Pair(null, null)
     }
 
     override fun isEqual(other: Value): Bool {
@@ -197,13 +197,14 @@ class Class(
     }
 
     override fun arity(): Int {
-        val initializer = getInstanceMethod("init")
+        val (initializer, _) = getInstanceMethod("init")
         return initializer?.arity() ?: 0
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Value>): Value {
         val instance = Instance(this)
-        getInstanceMethod("init")?.bind(instance)?.call(interpreter, arguments)
+        val (method, implementingClass) = getInstanceMethod("init")
+        method?.bind(instance, implementingClass?.superClass)?.call(interpreter, arguments)
         return instance
     }
 
@@ -213,31 +214,28 @@ class Class(
 
 }
 
-class Instance(val cls: Class) : Value() {
+class Instance(private val cls: Class) : Value() {
 
     private val fields = mutableMapOf<String, Value>()
 
-    fun superInstance(): Value {
-        return if (cls.superClass != null) {
-            val ret = Instance(cls.superClass)
-            for ((key, value) in fields) {
-                ret.fields[key] = value
-            }
-            ret
-        } else {
-            Nil()
-        }
+    fun superInstance(superClass: Class): Value {
+         val ret = Instance(superClass)
+         for ((key, value) in fields) {
+             ret.fields[key] = value
+         }
+         return ret
     }
 
     fun get(name: Token): Value {
         return if (name.lexeme in fields) {
             fields[name.lexeme]!!
         } else {
-            val method = cls.getInstanceMethod(name.lexeme)
+            val (method, implementingClass) = cls.getInstanceMethod(name.lexeme)
             if (method != null) {
-                method.bind(this)
+                method.bind(this, implementingClass?.superClass)
             } else {
-                val accessMethod = cls.getGetterMethod(name.lexeme)?.bind(this)
+                var (accessMethod, implementingClass) = cls.getGetterMethod(name.lexeme)
+                accessMethod = accessMethod?.bind(this, implementingClass?.superClass)
                 if (accessMethod != null) {
                     Getter(accessMethod)
                 } else {

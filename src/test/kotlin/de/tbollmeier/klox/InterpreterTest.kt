@@ -612,6 +612,34 @@ class InterpreterTest {
         testCode(code, expectedOutput)
     }
 
+    @Test
+    fun `super points to the correct instance`() {
+        val code = """
+            class A {
+                method() {
+                    print "A method";
+                }
+            }
+            class B < A {
+                method() {
+                    print "B method";
+                }
+                test() {
+                    super.method();
+                }
+            }
+            class C < B {}
+            C().test();
+        """.trimIndent()
+
+        val expectedOutput = """
+            A method
+            
+        """.trimIndent()
+
+        testCode(code, expectedOutput)
+    }
+
     private fun testCode(
         code: String,
         expectedOutput: String? = null,

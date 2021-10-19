@@ -366,8 +366,10 @@ class Interpreter : ExprVisitor<Value>, StmtVisitor {
                     else -> property
                 }
             }
-            is Class -> target.getClassMethod(get.name.lexeme) ?:
-                throw InterpreterError(get.name, "Undefined class method '${get.name.lexeme}'.")
+            is Class -> {
+                val (method, _) = target.getClassMethod(get.name.lexeme)
+                method ?: throw InterpreterError(get.name, "Undefined class method '${get.name.lexeme}'.")
+            }
             else -> throw InterpreterError(get.name, "Only classes and instances have properties.")
         }
     }
